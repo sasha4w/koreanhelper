@@ -1,0 +1,293 @@
+/* ================================
+   RESET
+================================ */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ================================
+   BASE
+================================ */
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f5f0ff;
+  color: #2d2d2d;
+  padding: 30px 20px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2em;
+  color: #5a3ea1;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 0.95em;
+  margin-bottom: 20px;
+}
+
+/* ================================
+   NAVIGATION
+================================ */
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.nav a {
+  display: inline-block;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-size: 0.95em;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.nav a.active {
+  background: #5a3ea1;
+  color: white;
+  box-shadow: 0 3px 12px rgba(90, 62, 161, 0.3);
+}
+
+.nav a.inactive {
+  background: white;
+  color: #5a3ea1;
+  border: 2px solid #c5b5f0;
+}
+
+.nav a.inactive:hover {
+  background: #ede8ff;
+}
+
+/* ================================
+   SECTION
+================================ */
+.section-title {
+  max-width: 1200px;
+  margin: 32px auto 14px;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: #5a3ea1;
+  font-weight: 700;
+  border-bottom: 2px solid #d4c8f8;
+  padding-bottom: 6px;
+}
+
+/* ================================
+   GRID & CARDS
+================================ */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 2px 12px rgba(90, 62, 161, 0.09);
+  border-top: 5px solid #7c5cbf;
+}
+
+.card:nth-child(2n) {
+  border-top-color: #e07bb5;
+}
+.card:nth-child(3n) {
+  border-top-color: #4db8c8;
+}
+.card:nth-child(4n) {
+  border-top-color: #f0a500;
+}
+.card:nth-child(5n) {
+  border-top-color: #56c27a;
+}
+.card:nth-child(6n) {
+  border-top-color: #e05c5c;
+}
+
+.card h2 {
+  font-size: 1.05em;
+  color: #5a3ea1;
+  margin-bottom: 4px;
+}
+
+/* ================================
+   TAGS
+================================ */
+.tag {
+  display: inline-block;
+  font-size: 0.75em;
+  border-radius: 20px;
+  padding: 2px 10px;
+  margin-bottom: 10px;
+  margin-right: 4px;
+}
+
+.tag.blue {
+  background: #e8f4fd;
+  color: #1a6fa8;
+}
+.tag.green {
+  background: #e6f9ee;
+  color: #2e7d52;
+}
+.tag.red {
+  background: #fdecea;
+  color: #c0392b;
+}
+.tag.orange {
+  background: #fff3e0;
+  color: #c07000;
+}
+.tag.purple {
+  background: #ede8ff;
+  color: #7c5cbf;
+}
+
+/* ================================
+   FORMULA BOX
+================================ */
+.formula {
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-family: "Courier New", monospace;
+  font-size: 0.95em;
+  margin-bottom: 10px;
+}
+
+.formula.purple {
+  background: #f9f6ff;
+  border-left: 4px solid #b39ddb;
+  color: #3a2a6e;
+}
+
+.formula.green {
+  background: #f0faf4;
+  border-left: 4px solid #56c27a;
+  color: #1a4d2e;
+}
+
+.formula.red {
+  background: #fef6f5;
+  border-left: 4px solid #e05c5c;
+  color: #7a1a1a;
+}
+
+.formula.orange {
+  background: #fffbf0;
+  border-left: 4px solid #f0a500;
+  color: #5a3d00;
+}
+
+/* ================================
+   TEXT CONTENT
+================================ */
+.desc {
+  font-size: 0.9em;
+  color: #555;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.examples {
+  border-top: 1px solid #f0eaff;
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.examples p {
+  font-size: 0.88em;
+  color: #444;
+  margin-bottom: 5px;
+  line-height: 1.5;
+}
+
+.kor {
+  color: #5a3ea1;
+  font-weight: 600;
+}
+
+.fr {
+  color: #888;
+  font-style: italic;
+}
+
+/* ================================
+   NOTES
+================================ */
+.note {
+  font-size: 0.82em;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-top: 8px;
+}
+
+.note.warning {
+  color: #e07b00;
+  background: #fff8e8;
+}
+
+.note.tip {
+  color: #1a6fa8;
+  background: #e8f4fd;
+}
+
+/* ================================
+   TWO COLUMNS
+================================ */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.col-box {
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #f9f6ff;
+}
+
+.col-box.green {
+  background: #f0faf4;
+}
+.col-box.red {
+  background: #fef6f5;
+}
+
+.col-box h4 {
+  font-size: 0.78em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.col-box p {
+  font-size: 0.85em;
+  color: #444;
+  margin-bottom: 4px;
+}
+
+/* ================================
+   FOOTER
+================================ */
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  color: #bbb;
+  font-size: 0.82em;
+}
