@@ -4,6 +4,7 @@ export const grammairesSections = [
     cards: [
       {
         title: "이 / 가",
+        level: 1,
         tag: "Sujet",
         tagColor: "blue",
         formula: "Nom + 이 (consonne) / 가 (voyelle)",
@@ -15,6 +16,7 @@ export const grammairesSections = [
       },
       {
         title: "은 / 는",
+        level: 1,
         tag: "Thème / Contraste",
         tagColor: "purple",
         formula: "Nom + 은 (consonne) / 는 (voyelle)",
@@ -26,6 +28,7 @@ export const grammairesSections = [
       },
       {
         title: "을 / 를",
+        level: 1,
         tag: "Objet direct",
         tagColor: "green",
         formula: "Nom + 을 (consonne) / 를 (voyelle)",
@@ -43,6 +46,7 @@ export const grammairesSections = [
     cards: [
       {
         title: "에",
+        level: 1,
         tag: "Lieu / Direction",
         tagColor: "blue",
         formula: "Nom + 에",
@@ -54,6 +58,7 @@ export const grammairesSections = [
       },
       {
         title: "에서",
+        level: 1,
         tag: "Lieu d'action",
         tagColor: "green",
         formula: "Nom + 에서",
@@ -65,6 +70,7 @@ export const grammairesSections = [
       },
       {
         title: "로 / 으로",
+        level: 1,
         tag: "Direction / Moyen",
         tagColor: "orange",
         formula: "Nom + 로 (voyelle/ㄹ) / 으로 (consonne)",
@@ -82,6 +88,7 @@ export const grammairesSections = [
     cards: [
       {
         title: "과 / 와",
+        level: 1,
         tag: "Et (avec nom)",
         tagColor: "blue",
         formula: "Nom + 과 (consonne) / 와 (voyelle)",
@@ -93,6 +100,7 @@ export const grammairesSections = [
       },
       {
         title: "하고",
+        level: 1,
         tag: "Et / Avec (oral)",
         tagColor: "purple",
         formula: "Nom + 하고",
@@ -104,6 +112,7 @@ export const grammairesSections = [
       },
       {
         title: "도",
+        level: 1,
         tag: "Aussi / Même",
         tagColor: "green",
         formula: "Nom + 도",
@@ -121,6 +130,7 @@ export const grammairesSections = [
     cards: [
       {
         title: "에 (temps)",
+        level: 1,
         tag: "Moment précis",
         tagColor: "orange",
         formula: "Temps + 에",
