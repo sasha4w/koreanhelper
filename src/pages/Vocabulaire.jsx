@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../SupabaseClient";
+import { supabase } from "../supabaseClient";
 import VocabCard from "../components/VocabCard";
 
 const TYPE_COLORS = {

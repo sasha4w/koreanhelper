@@ -3,7 +3,7 @@ import Layout from "./components/Layout";
 import Verbes from "./pages/Verbes";
 import Grammaire from "./pages/Grammaire";
 import Vocabulaire from "./pages/Vocabulaire";
-
+import Quiz from "./pages/Quiz";
 export default function App() {
   return (
     <Layout>
@@ -12,6 +12,7 @@ export default function App() {
         <Route path="/verbes" element={<Verbes />} />
         <Route path="/grammaire" element={<Grammaire />} />
         <Route path="/vocabulaire" element={<Vocabulaire />} />
+        <Route path="/quiz" element={<Quiz />} />
       </Routes>
     </Layout>
   );
