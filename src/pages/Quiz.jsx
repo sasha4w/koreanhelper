@@ -14,6 +14,10 @@ const STATES = {
 export default function Quiz() {
   const [words, setWords] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // On met "1" par défaut au lieu de "all"
+  const [level, setLevel] = useState("1");
+
   const [screen, setScreen] = useState(STATES.SELECT);
   const [chapter, setChapter] = useState(null);
   const [queue, setQueue] = useState([]);
@@ -33,14 +37,17 @@ export default function Quiz() {
     fetchWords();
   }, []);
 
-  // chapitres disponibles
+  // 1. Filtrer les mots strictement selon le niveau choisi
+  const filteredWords = words.filter((w) => String(w.level) === String(level));
+
+  // 2. Extraire les chapitres uniquement à partir des mots du niveau sélectionné
   const chapters = [
-    ...new Set(words.map((w) => w.chapitre).filter(Boolean)),
+    ...new Set(filteredWords.map((w) => w.chapitre).filter(Boolean)),
   ].sort((a, b) => Number(a) - Number(b));
 
   const startQuiz = (ch) => {
     const pool = shuffle(
-      words.filter((w) => String(w.chapitre) === String(ch)),
+      filteredWords.filter((w) => String(w.chapitre) === String(ch)),
     );
     setChapter(ch);
     setQueue(pool);
@@ -115,22 +122,50 @@ export default function Quiz() {
         <p className="quiz-sub">
           Tu devras écrire le 한글 à partir de la traduction française.
         </p>
-        <div className="quiz-chapters">
-          {chapters.map((ch) => {
-            const count = words.filter(
-              (w) => String(w.chapitre) === String(ch),
-            ).length;
-            return (
+
+        {/* ── Boutons de filtre de niveau (sans le "Tout voir") ── */}
+        <div
+          className="filter-container"
+          style={{ justifyContent: "center", marginBottom: "2rem" }}
+        >
+          <div className="filter-group">
+            {[
+              { value: "1", label: "Niveau 1" },
+              { value: "2", label: "Niveau 2" },
+            ].map(({ value, label }) => (
               <button
-                key={ch}
-                className="quiz-chapter-btn"
-                onClick={() => startQuiz(ch)}
+                key={value}
+                onClick={() => setLevel(value)}
+                className={`filter-btn ${level === value ? "active" : ""}`}
               >
-                <span className="quiz-chapter-num">Chapitre {ch}</span>
-                <span className="quiz-chapter-count">{count} mots</span>
+                {label}
               </button>
-            );
-          })}
+            ))}
+          </div>
+        </div>
+
+        <div className="quiz-chapters">
+          {chapters.length === 0 ? (
+            <p style={{ textAlign: "center", color: "#aaa", width: "100%" }}>
+              Aucun mot trouvé pour ce niveau.
+            </p>
+          ) : (
+            chapters.map((ch) => {
+              const count = filteredWords.filter(
+                (w) => String(w.chapitre) === String(ch),
+              ).length;
+              return (
+                <button
+                  key={ch}
+                  className="quiz-chapter-btn"
+                  onClick={() => startQuiz(ch)}
+                >
+                  <span className="quiz-chapter-num">Chapitre {ch}</span>
+                  <span className="quiz-chapter-count">{count} mots</span>
+                </button>
+              );
+            })
+          )}
         </div>
       </div>
     );
@@ -150,7 +185,9 @@ export default function Quiz() {
           />
         </div>
         <div className="quiz-meta">
-          <span>Chapitre {chapter}</span>
+          <span>
+            Chapitre {chapter} (Niv {level})
+          </span>
           <span>
             {index + 1} / {total}
           </span>
@@ -218,7 +255,7 @@ export default function Quiz() {
           {score} / {total}
         </h2>
         <p className="quiz-sub">
-          {pct}% de réussite — Chapitre {chapter}
+          {pct}% de réussite — Chapitre {chapter} (Niveau {level})
         </p>
       </div>
 

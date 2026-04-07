@@ -23,6 +23,12 @@ export default function Nav() {
       >
         📖 Vocabulaire
       </NavLink>
+      <NavLink
+        to="/quiz"
+        className={({ isActive }) => (isActive ? "active" : "inactive")}
+      >
+        🧠 Quiz
+      </NavLink>
     </div>
   );
 }
