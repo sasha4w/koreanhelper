@@ -12,9 +12,7 @@ export default function Layout({ children }) {
 
       {children}
 
-      <p className="footer">
-        📚 Fiche de révision — Grammaire coréenne &nbsp;|&nbsp; 화이팅! 💜
-      </p>
+      <p className="footer">📚 Fiche de révision — Grammaire coréenne</p>
     </>
   );
 }

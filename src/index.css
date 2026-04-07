@@ -67,7 +67,139 @@ h1 {
 .nav a.inactive:hover {
   background: #ede8ff;
 }
+/* ================================
+   LEGEND
+================================ */
+.legend {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
 
+.legend-label {
+  font-size: 13px;
+  color: #888;
+}
+
+/* ================================
+   FILTER GROUPS (Vocabulaire)
+================================ */
+.filter-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 30px 0;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  gap: 6px;
+  background: white;
+  border-radius: 30px;
+  padding: 5px;
+  box-shadow: 0 2px 8px rgba(90, 62, 161, 0.1);
+}
+
+.filter-divider {
+  width: 1px;
+  height: 36px;
+  background: #e0d8ff;
+}
+
+.filter-btn {
+  padding: 7px 18px;
+  border: none;
+  background: transparent;
+  color: #888;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.88rem;
+}
+
+.filter-btn:hover {
+  color: #5a3ea1;
+  background: #f0eaff;
+}
+
+.filter-btn.active {
+  background: #5a3ea1;
+  color: white;
+  box-shadow: 0 3px 10px rgba(90, 62, 161, 0.3);
+}
+
+/* Variante secondaire (groupement) */
+.filter-btn.secondary.active {
+  background: #e07bb5;
+  box-shadow: 0 3px 10px rgba(224, 123, 181, 0.3);
+}
+
+.filter-btn.secondary:hover {
+  color: #e07bb5;
+  background: #fdf0f7;
+}
+
+/* ================================
+   VOCAB ACCORDION BODY
+   (pas de grid, le tableau est full-width)
+================================ */
+.vocab-accordion-body.open {
+  padding: 0;
+}
+
+/* VocabCard à l'intérieur de l'accordion : flush */
+.vocab-accordion-body .card {
+  border-radius: 0;
+  box-shadow: none;
+  border-top: none;
+  border-bottom: 1px solid #f0eaff;
+  max-width: 100%;
+}
+
+/* ================================
+   VOCAB TABLE
+================================ */
+.vocab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88em;
+  margin-top: 10px;
+}
+
+.vocab-table th {
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 0.78em;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #5a3ea1;
+  border-bottom: 2px solid #ede8ff;
+}
+
+.vocab-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f5f0ff;
+  vertical-align: middle;
+}
+
+.vocab-table tr:last-child td {
+  border-bottom: none;
+}
+
+.vocab-table tr:hover td {
+  background: #faf8ff;
+}
+
+.vocab-table .kor {
+  font-size: 1em;
+  font-weight: 700;
+}
 /* ================================
    ACCORDION SECTION
 ================================ */
