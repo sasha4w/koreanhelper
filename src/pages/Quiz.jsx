@@ -6,50 +6,61 @@ function shuffle(arr) {
 }
 
 const STATES = {
-  SELECT: "select", // choix du chapitre
-  QUIZ: "quiz", // en cours
-  RESULT: "result", // résultats finaux
+  SELECT: "select",
+  QUIZ: "quiz",
+  RESULT: "result",
 };
 
 export default function Quiz() {
   const [words, setWords] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // On met "1" par défaut au lieu de "all"
   const [level, setLevel] = useState("1");
-
   const [screen, setScreen] = useState(STATES.SELECT);
-  const [chapter, setChapter] = useState(null);
+  const [chapter, setChapter] = useState(null); // { chapitre, partie }
   const [queue, setQueue] = useState([]);
   const [index, setIndex] = useState(0);
   const [input, setInput] = useState("");
-  const [feedback, setFeedback] = useState(null); // null | "correct" | "wrong"
+  const [feedback, setFeedback] = useState(null);
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState([]);
   const inputRef = useRef(null);
 
   useEffect(() => {
     const fetchWords = async () => {
-      const { data, error } = await supabase.from("vocabulaire").select("*");
+      const { data, error } = await supabase
+        .from("vocabulaire")
+        .select("*")
+        .order("chapitre", { ascending: true })
+        .order("partie", { ascending: true });
       if (!error) setWords(data);
       setLoading(false);
     };
     fetchWords();
   }, []);
 
-  // 1. Filtrer les mots strictement selon le niveau choisi
   const filteredWords = words.filter((w) => String(w.level) === String(level));
 
-  // 2. Extraire les chapitres uniquement à partir des mots du niveau sélectionné
-  const chapters = [
-    ...new Set(filteredWords.map((w) => w.chapitre).filter(Boolean)),
-  ].sort((a, b) => Number(a) - Number(b));
-
-  const startQuiz = (ch) => {
-    const pool = shuffle(
-      filteredWords.filter((w) => String(w.chapitre) === String(ch)),
+  // Extraire les paires uniques (chapitre, partie) triées
+  const chapters = filteredWords
+    .reduce((acc, w) => {
+      if (w.chapitre == null || w.partie == null) return acc;
+      const exists = acc.find(
+        (c) => c.chapitre === w.chapitre && c.partie === w.partie,
+      );
+      if (!exists) acc.push({ chapitre: w.chapitre, partie: w.partie });
+      return acc;
+    }, [])
+    .sort((a, b) =>
+      a.chapitre !== b.chapitre ? a.chapitre - b.chapitre : a.partie - b.partie,
     );
-    setChapter(ch);
+
+  const startQuiz = ({ chapitre, partie }) => {
+    const pool = shuffle(
+      filteredWords.filter(
+        (w) => w.chapitre === chapitre && w.partie === partie,
+      ),
+    );
+    setChapter({ chapitre, partie });
     setQueue(pool);
     setIndex(0);
     setInput("");
@@ -68,13 +79,9 @@ export default function Quiz() {
     const answer = input.trim();
     const correct = current.hangul?.trim();
     const isOk = answer === correct;
-
     setFeedback(isOk ? "correct" : "wrong");
-    if (isOk) {
-      setScore((s) => s + 1);
-    } else {
-      setMistakes((m) => [...m, { word: current, given: answer }]);
-    }
+    if (isOk) setScore((s) => s + 1);
+    else setMistakes((m) => [...m, { word: current, given: answer }]);
   };
 
   const handleNext = () => {
@@ -123,7 +130,6 @@ export default function Quiz() {
           Tu devras écrire le 한글 à partir de la traduction française.
         </p>
 
-        {/* ── Boutons de filtre de niveau (sans le "Tout voir") ── */}
         <div
           className="filter-container"
           style={{ justifyContent: "center", marginBottom: "2rem" }}
@@ -150,17 +156,19 @@ export default function Quiz() {
               Aucun mot trouvé pour ce niveau.
             </p>
           ) : (
-            chapters.map((ch) => {
+            chapters.map(({ chapitre, partie }) => {
               const count = filteredWords.filter(
-                (w) => String(w.chapitre) === String(ch),
+                (w) => w.chapitre === chapitre && w.partie === partie,
               ).length;
               return (
                 <button
-                  key={ch}
+                  key={`${chapitre}-${partie}`}
                   className="quiz-chapter-btn"
-                  onClick={() => startQuiz(ch)}
+                  onClick={() => startQuiz({ chapitre, partie })}
                 >
-                  <span className="quiz-chapter-num">Chapitre {ch}</span>
+                  <span className="quiz-chapter-num">
+                    Chapitre {chapitre} · Partie {partie}
+                  </span>
                   <span className="quiz-chapter-count">{count} mots</span>
                 </button>
               );
@@ -174,10 +182,8 @@ export default function Quiz() {
   /* ── QUIZ ── */
   if (screen === STATES.QUIZ) {
     const progress = (index / total) * 100;
-
     return (
       <div className="quiz-wrap">
-        {/* Progress bar */}
         <div className="quiz-progress-bar">
           <div
             className="quiz-progress-fill"
@@ -186,7 +192,7 @@ export default function Quiz() {
         </div>
         <div className="quiz-meta">
           <span>
-            Chapitre {chapter} (Niv {level})
+            Chapitre {chapter.chapitre} · Partie {chapter.partie} (Niv {level})
           </span>
           <span>
             {index + 1} / {total}
@@ -194,15 +200,11 @@ export default function Quiz() {
           <span className="quiz-score-inline">✓ {score}</span>
         </div>
 
-        {/* Carte question */}
         <div className={`quiz-card ${feedback || ""}`}>
           {current.theme && <span className="tag">{current.theme}</span>}
           {current.type && <span className="tag">{current.type}</span>}
-
           <p className="quiz-fr">{current.fr}</p>
-
           {feedback && <p className="quiz-answer-reveal">{current.hangul}</p>}
-
           {feedback === "wrong" && (
             <p className="quiz-given">
               Ta réponse : <em>{input || "—"}</em>
@@ -210,7 +212,6 @@ export default function Quiz() {
           )}
         </div>
 
-        {/* Saisie */}
         <div className="quiz-input-row">
           <input
             ref={inputRef}
@@ -255,7 +256,8 @@ export default function Quiz() {
           {score} / {total}
         </h2>
         <p className="quiz-sub">
-          {pct}% de réussite — Chapitre {chapter} (Niveau {level})
+          {pct}% de réussite — Chapitre {chapter.chapitre} · Partie{" "}
+          {chapter.partie} (Niveau {level})
         </p>
       </div>
 

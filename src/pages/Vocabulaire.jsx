@@ -11,7 +11,6 @@ const TYPE_COLORS = {
 
 function VocabSection({ title, children }) {
   const [isOpen, setIsOpen] = useState(false);
-
   return (
     <div className="accordion-section">
       <button
@@ -39,7 +38,11 @@ export default function Vocabulaire() {
   useEffect(() => {
     const fetchWords = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from("vocabulaire").select("*");
+      const { data, error } = await supabase
+        .from("vocabulaire")
+        .select("*")
+        .order("chapitre", { ascending: true })
+        .order("partie", { ascending: true });
       if (error) console.error(error);
       else setWords(data);
       setLoading(false);
@@ -52,20 +55,33 @@ export default function Vocabulaire() {
   );
 
   const groups = filtered.reduce((acc, w) => {
-    const key =
-      groupBy === "theme" ? w.theme || "—" : "Chapitre " + (w.chapitre || "—");
+    let key;
+    if (groupBy === "theme") {
+      key = w.theme || "—";
+    } else {
+      // Clé sortable : "003-1" pour chapitre 3 partie 1
+      key = `${String(w.chapitre).padStart(3, "0")}-${w.partie}`;
+    }
     if (!acc[key]) acc[key] = [];
     acc[key].push(w);
     return acc;
   }, {});
 
+  // Tri : alphabétique pour thème, numérique naturel pour chapitre
   const sortedKeys = Object.keys(groups).sort();
+
+  // Fonction pour afficher le titre lisible du groupe
+  const getGroupLabel = (key) => {
+    if (groupBy === "theme") return key;
+    // "003-1" → "Chapitre 3 · Partie 1"
+    const [chap, part] = key.split("-");
+    return `Chapitre ${parseInt(chap)} · Partie ${part}`;
+  };
 
   if (loading) return <div className="loader">Chargement...</div>;
 
   return (
     <>
-      {/* Légende */}
       <div className="legend">
         <span className="legend-label">Types :</span>
         {Object.entries(TYPE_COLORS).map(([type, s]) => (
@@ -79,7 +95,6 @@ export default function Vocabulaire() {
         ))}
       </div>
 
-      {/* Filtres niveau */}
       <div className="filter-container">
         <div className="filter-group">
           {[
@@ -96,10 +111,7 @@ export default function Vocabulaire() {
             </button>
           ))}
         </div>
-
         <div className="filter-divider" />
-
-        {/* Filtres groupement */}
         <div className="filter-group">
           {[
             { value: "theme", label: "Par thème" },
@@ -116,13 +128,12 @@ export default function Vocabulaire() {
         </div>
       </div>
 
-      {/* Contenu */}
       {sortedKeys.length === 0 ? (
         <p style={{ textAlign: "center", color: "#aaa" }}>Aucun mot trouvé.</p>
       ) : (
         sortedKeys.map((key) => (
-          <VocabSection key={key} title={key}>
-            <VocabCard groupTitle={key} words={groups[key]} />
+          <VocabSection key={key} title={getGroupLabel(key)}>
+            <VocabCard groupTitle={getGroupLabel(key)} words={groups[key]} />
           </VocabSection>
         ))
       )}

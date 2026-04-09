@@ -39,7 +39,9 @@ export default function VocabCard({ groupTitle, words }) {
                 </td>
                 <td>{word.level}</td>
                 <td>
-                  <span className="tag">{word.chapitre}</span>
+                  <span className="tag">
+                    {word.chapitre}·{word.partie}
+                  </span>
                 </td>
               </tr>
             );
