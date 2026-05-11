@@ -49,14 +49,31 @@ export default function Vocabulaire() {
   useEffect(() => {
     const fetchWords = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("vocabulaire")
-        .select("*")
-        .order("chapitre", { ascending: true })
-        .order("partie", { ascending: true })
-        .range(0, 9999); // ✅ lève la limite des 1000 lignes
-      if (error) console.error(error);
-      else setWords(data);
+      let allWords = [];
+      let from = 0;
+      const pageSize = 1000;
+
+      while (true) {
+        const { data, error } = await supabase
+          .from("vocabulaire")
+          .select("*")
+          .order("chapitre", { ascending: true })
+          .order("partie", { ascending: true })
+          .order("id", { ascending: true })
+          .range(from, from + pageSize - 1);
+
+        if (error) {
+          console.error(error);
+          break;
+        }
+        if (!data || data.length === 0) break;
+
+        allWords = [...allWords, ...data];
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+
+      setWords(allWords);
       setLoading(false);
     };
     fetchWords();
