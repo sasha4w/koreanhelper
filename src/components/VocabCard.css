@@ -1,0 +1,89 @@
+/* ================================
+   LÉGENDE
+================================ */
+.legend {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.legend-label {
+  font-size: 13px;
+  color: #888;
+}
+
+/* ================================
+   VOCAB ACCORDION BODY
+   (override Section — pas de padding)
+================================ */
+.vocab-accordion-body.open {
+  padding: 16px 20px;
+}
+
+/* ================================
+   VOCAB GRID
+   Multi-colonnes, remplace le tableau
+================================ */
+.vocab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+/* ================================
+   VOCAB WORD CARD
+================================ */
+.vocab-word-card {
+  background: white;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-left: 3px solid #7c5cbf;
+  box-shadow: 0 1px 6px rgba(90, 62, 161, 0.07);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.vocab-word-card:hover {
+  box-shadow: 0 4px 14px rgba(90, 62, 161, 0.14);
+  transform: translateY(-1px);
+}
+
+/* Couleurs alternées sur la bordure gauche */
+.vocab-word-card:nth-child(3n + 1) {
+  border-left-color: #7c5cbf;
+}
+.vocab-word-card:nth-child(3n + 2) {
+  border-left-color: #e07bb5;
+}
+.vocab-word-card:nth-child(3n + 3) {
+  border-left-color: #4db8c8;
+}
+
+.vocab-hangul {
+  font-size: 1.05em;
+  font-weight: 700;
+  color: #5a3ea1;
+  line-height: 1.2;
+}
+
+.vocab-fr {
+  font-size: 0.8em;
+  color: #888;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.vocab-word-card .tag {
+  margin: 0;
+  align-self: flex-start;
+  font-size: 0.7em;
+  padding: 1px 8px;
+}

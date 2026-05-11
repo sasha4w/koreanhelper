@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
-
+import "./Quiz.css";
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
@@ -31,7 +31,8 @@ export default function Quiz() {
         .from("vocabulaire")
         .select("*")
         .order("chapitre", { ascending: true })
-        .order("partie", { ascending: true });
+        .order("partie", { ascending: true })
+        .range(0, 9999);
       if (!error) setWords(data);
       setLoading(false);
     };

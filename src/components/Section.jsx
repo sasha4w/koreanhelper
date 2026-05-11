@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import "./Section.css";
 export default function Section({ title, children, defaultOpen = false }) {
   // Changé à false ici
   const [isOpen, setIsOpen] = useState(defaultOpen);

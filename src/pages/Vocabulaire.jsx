@@ -1,24 +1,35 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import VocabCard from "../components/VocabCard";
+import "./Vocabulaire.css";
 
 const TYPE_COLORS = {
   명사: { bg: "#EEEDFE", color: "#3C3489" },
   동사: { bg: "#E1F5EE", color: "#085041" },
   형용사: { bg: "#FAECE7", color: "#993C1D" },
   부사: { bg: "#FAEEDA", color: "#854F0B" },
+  expression: { bg: "#FDE8F5", color: "#7B1F6A" },
+  의존명사: { bg: "#E8F0FD", color: "#1A3A8A" },
+  관형사: { bg: "#FDF3E8", color: "#8A4A1A" },
+  대명사: { bg: "#E8FDF3", color: "#1A6A4A" },
+  접속사: { bg: "#F3E8FD", color: "#5A1A8A" },
+  조사: { bg: "#FDE8E8", color: "#8A1A1A" },
 };
 
-function VocabSection({ title, children }) {
+function VocabSection({ title, count, children }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="accordion-section">
       <button
         className={`accordion-header ${isOpen ? "open" : ""}`}
         onClick={() => setIsOpen((v) => !v)}
+        aria-expanded={isOpen}
       >
         <span className="accordion-title">{title}</span>
-        <span className="accordion-chevron">{isOpen ? "▲" : "▼"}</span>
+        <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "0.75em", opacity: 0.7 }}>{count} mots</span>
+          <span className="accordion-chevron">{isOpen ? "▲" : "▼"}</span>
+        </span>
       </button>
       <div
         className={`accordion-body vocab-accordion-body ${isOpen ? "open" : ""}`}
@@ -42,7 +53,8 @@ export default function Vocabulaire() {
         .from("vocabulaire")
         .select("*")
         .order("chapitre", { ascending: true })
-        .order("partie", { ascending: true });
+        .order("partie", { ascending: true })
+        .range(0, 9999); // ✅ lève la limite des 1000 lignes
       if (error) console.error(error);
       else setWords(data);
       setLoading(false);
@@ -59,7 +71,6 @@ export default function Vocabulaire() {
     if (groupBy === "theme") {
       key = w.theme || "—";
     } else {
-      // Clé sortable : "003-1" pour chapitre 3 partie 1
       key = `${String(w.chapitre).padStart(3, "0")}-${w.partie}`;
     }
     if (!acc[key]) acc[key] = [];
@@ -67,13 +78,10 @@ export default function Vocabulaire() {
     return acc;
   }, {});
 
-  // Tri : alphabétique pour thème, numérique naturel pour chapitre
   const sortedKeys = Object.keys(groups).sort();
 
-  // Fonction pour afficher le titre lisible du groupe
   const getGroupLabel = (key) => {
     if (groupBy === "theme") return key;
-    // "003-1" → "Chapitre 3 · Partie 1"
     const [chap, part] = key.split("-");
     return `Chapitre ${parseInt(chap)} · Partie ${part}`;
   };
@@ -82,6 +90,7 @@ export default function Vocabulaire() {
 
   return (
     <>
+      {/* Légende des types */}
       <div className="legend">
         <span className="legend-label">Types :</span>
         {Object.entries(TYPE_COLORS).map(([type, s]) => (
@@ -95,6 +104,7 @@ export default function Vocabulaire() {
         ))}
       </div>
 
+      {/* Filtres */}
       <div className="filter-container">
         <div className="filter-group">
           {[
@@ -128,12 +138,17 @@ export default function Vocabulaire() {
         </div>
       </div>
 
+      {/* Accordions */}
       {sortedKeys.length === 0 ? (
         <p style={{ textAlign: "center", color: "#aaa" }}>Aucun mot trouvé.</p>
       ) : (
         sortedKeys.map((key) => (
-          <VocabSection key={key} title={getGroupLabel(key)}>
-            <VocabCard groupTitle={getGroupLabel(key)} words={groups[key]} />
+          <VocabSection
+            key={key}
+            title={getGroupLabel(key)}
+            count={groups[key].length}
+          >
+            <VocabCard words={groups[key]} />
           </VocabSection>
         ))
       )}
