@@ -1,0 +1,56 @@
+/* ================================
+   COQUILLE DE L'APPLICATION
+================================ */
+.app-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: var(--sp-2) var(--sp-3);
+  padding-top: max(var(--sp-2), env(safe-area-inset-top));
+  background: rgba(245, 240, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-title {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--violet);
+  letter-spacing: 0.5px;
+}
+
+@media (min-width: 768px) {
+  /* La nav n'est plus fixée en bas : on la remonte sous le titre. */
+  .app-shell > .app-header {
+    order: 0;
+  }
+  .app-shell > .nav {
+    order: 1;
+  }
+  .app-shell > .page {
+    order: 2;
+  }
+
+  .app-header {
+    position: static;
+    background: none;
+    border-bottom: none;
+    backdrop-filter: none;
+    padding-top: var(--sp-5);
+    padding-bottom: var(--sp-4);
+  }
+
+  .app-title {
+    font-size: var(--fs-h1);
+  }
+}

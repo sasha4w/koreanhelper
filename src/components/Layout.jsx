@@ -1,18 +1,16 @@
 import Nav from "./Nav";
+import "./Layout.css";
 
 export default function Layout({ children }) {
   return (
-    <>
-      <h1>🇰🇷 Grammaire Coréenne</h1>
-      <p className="subtitle">
-        Fiche de révision • Terminaisons verbales & Particules
-      </p>
+    <div className="app-shell">
+      <header className="app-header">
+        <span className="app-title">🇰🇷 Korean Helper</span>
+      </header>
+
+      <main className="page">{children}</main>
 
       <Nav />
-
-      {children}
-
-      <p className="footer">📚 Fiche de révision — Grammaire coréenne</p>
-    </>
+    </div>
   );
 }

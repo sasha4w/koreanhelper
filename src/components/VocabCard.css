@@ -1,89 +1,86 @@
 /* ================================
-   LÉGENDE
+   LÉGENDE DES TYPES
 ================================ */
 .legend {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-1);
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--sp-3);
 }
 
 .legend-label {
-  font-size: 13px;
-  color: #888;
-}
-
-/* ================================
-   VOCAB ACCORDION BODY
-   (override Section — pas de padding)
-================================ */
-.vocab-accordion-body.open {
-  padding: 16px 20px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
 }
 
 /* ================================
    VOCAB GRID
-   Multi-colonnes, remplace le tableau
 ================================ */
 .vocab-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
+  gap: var(--sp-2);
   width: 100%;
+}
+
+@media (min-width: 480px) {
+  .vocab-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+    gap: var(--sp-3);
+  }
 }
 
 /* ================================
    VOCAB WORD CARD
 ================================ */
 .vocab-word-card {
-  background: white;
-  border-radius: 10px;
-  padding: 12px 14px;
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: var(--sp-3);
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  border-left: 3px solid #7c5cbf;
-  box-shadow: 0 1px 6px rgba(90, 62, 161, 0.07);
+  gap: var(--sp-1);
+  border-left: 3px solid var(--violet-light);
+  box-shadow: var(--shadow-sm);
   transition:
-    box-shadow 0.2s ease,
-    transform 0.15s ease;
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+  min-width: 0;
 }
 
 .vocab-word-card:hover {
-  box-shadow: 0 4px 14px rgba(90, 62, 161, 0.14);
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
 
-/* Couleurs alternées sur la bordure gauche */
-.vocab-word-card:nth-child(3n + 1) {
-  border-left-color: #7c5cbf;
-}
 .vocab-word-card:nth-child(3n + 2) {
-  border-left-color: #e07bb5;
+  border-left-color: var(--rose);
 }
 .vocab-word-card:nth-child(3n + 3) {
-  border-left-color: #4db8c8;
+  border-left-color: var(--teal);
 }
 
 .vocab-hangul {
-  font-size: 1.05em;
+  font-size: var(--fs-body);
   font-weight: 700;
-  color: #5a3ea1;
-  line-height: 1.2;
+  color: var(--violet);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .vocab-fr {
-  font-size: 0.8em;
-  color: #888;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
   font-style: italic;
-  line-height: 1.3;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .vocab-word-card .tag {
   margin: 0;
   align-self: flex-start;
-  font-size: 0.7em;
+  font-size: 0.7rem;
   padding: 1px 8px;
 }

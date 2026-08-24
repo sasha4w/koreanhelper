@@ -1,36 +1,100 @@
 /* ================================
-   NAV
+   NAVIGATION
+   Mobile : barre d'onglets fixe en bas.
+   Desktop : pills centrées, en flux.
 ================================ */
 .nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
   display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  gap: 2px;
+  padding: var(--sp-1) var(--sp-1) 0;
+  padding-bottom: max(var(--sp-1), env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 12px rgba(90, 62, 161, 0.08);
+}
+
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-}
-
-.nav a {
-  display: inline-block;
-  padding: 10px 24px;
-  border-radius: 30px;
-  font-size: 0.95em;
-  font-weight: 600;
+  gap: 2px;
+  min-height: 56px;
+  padding: var(--sp-1);
+  border-radius: var(--r-md);
+  color: var(--text-muted);
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all var(--t-fast);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.nav a.active {
-  background: #5a3ea1;
-  color: white;
-  box-shadow: 0 3px 12px rgba(90, 62, 161, 0.3);
+.nav-tab.active {
+  color: var(--violet);
+  background: var(--violet-soft);
 }
 
-.nav a.inactive {
-  background: white;
-  color: #5a3ea1;
-  border: 2px solid #c5b5f0;
+.nav-tab:focus-visible {
+  outline: 3px solid var(--violet-border);
+  outline-offset: -3px;
 }
 
-.nav a.inactive:hover {
-  background: #ede8ff;
+.nav-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.nav-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: center;
+}
+
+/* ── Desktop : retour à une nav en pills ── */
+@media (min-width: 768px) {
+  .nav {
+    position: static;
+    justify-content: center;
+    gap: var(--sp-2);
+    padding: 0;
+    margin-bottom: var(--sp-5);
+    background: none;
+    border-top: none;
+    box-shadow: none;
+  }
+
+  .nav-tab {
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: var(--sp-2);
+    min-height: var(--tap);
+    padding: var(--sp-2) var(--sp-5);
+    border: 2px solid var(--violet-border);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--violet);
+  }
+
+  .nav-tab:hover:not(.active) {
+    background: var(--violet-soft);
+  }
+
+  .nav-tab.active {
+    background: var(--violet);
+    border-color: var(--violet);
+    color: var(--text-on-violet);
+    box-shadow: var(--shadow-md);
+  }
+
+  .nav-label {
+    font-size: var(--fs-sm);
+  }
 }

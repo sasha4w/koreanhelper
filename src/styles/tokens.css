@@ -1,0 +1,81 @@
+/* ================================
+   DESIGN TOKENS
+   Source unique de vérité pour couleurs, espacements, typo.
+================================ */
+:root {
+  /* — Marque — */
+  --violet: #5a3ea1;
+  --violet-hover: #4a3090;
+  --violet-light: #7c5cbf;
+  --violet-soft: #ede8ff;
+  --violet-softer: #f5f0ff;
+  --violet-border: #c5b5f0;
+  --violet-border-soft: #e0d8ff;
+
+  --rose: #e07bb5;
+  --rose-hover: #cc6aa0;
+  --teal: #4db8c8;
+  --amber: #f0a500;
+
+  /* — Sémantique — */
+  --success: #56c27a;
+  --success-strong: #2e7d52;
+  --success-bg: #f0faf4;
+  --danger: #e05c5c;
+  --danger-strong: #b03535;
+  --danger-bg: #fef6f5;
+
+  /* — Surfaces — */
+  --bg: #f5f0ff;
+  --surface: #ffffff;
+  --surface-alt: #faf8ff;
+  --border: #e0d8ff;
+  --border-strong: #c5b5f0;
+
+  /* — Textes (contrastes AA sur --surface) — */
+  --text: #2d2d2d;
+  --text-muted: #6b6b6b;
+  --text-faint: #8a8a8a;
+  --text-on-violet: #ffffff;
+
+  /* — Espacements — */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* — Rayons — */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  /* — Ombres — */
+  --shadow-sm: 0 1px 3px rgba(90, 62, 161, 0.08);
+  --shadow-md: 0 4px 14px rgba(90, 62, 161, 0.12);
+  --shadow-lg: 0 8px 28px rgba(90, 62, 161, 0.16);
+
+  /* — Typographie — */
+  --font:
+    "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, -apple-system,
+    Arial, sans-serif;
+  --fs-h1: clamp(1.35rem, 4.5vw, 2rem);
+  --fs-h2: clamp(1.15rem, 3.6vw, 1.5rem);
+  --fs-h3: clamp(1rem, 3vw, 1.15rem);
+  --fs-body: 1rem;
+  --fs-sm: 0.875rem;
+  --fs-xs: 0.78rem;
+  --fs-kor: clamp(1.05rem, 4vw, 1.35rem);
+
+  /* — Layout — */
+  --tap: 44px;
+  --nav-h: 64px;
+  --page-max: 720px;
+  --page-max-wide: 1100px;
+
+  /* — Transitions — */
+  --t-fast: 0.15s ease;
+  --t: 0.25s ease;
+}

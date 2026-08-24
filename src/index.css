@@ -1,3 +1,6 @@
+@import "./styles/tokens.css";
+@import "./styles/components.css";
+
 /* ================================
    RESET
 ================================ */
@@ -7,29 +10,59 @@
   padding: 0;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 /* ================================
-   BASE
+   BASE — mobile-first
 ================================ */
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #f5f0ff;
-  color: #2d2d2d;
-  padding: 30px 20px;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1 {
-  text-align: center;
-  font-size: 2em;
-  color: #5a3ea1;
-  margin-bottom: 6px;
-  letter-spacing: 1px;
+  font-size: var(--fs-h1);
+  color: var(--violet);
+  letter-spacing: 0.5px;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+}
+
+h3 {
+  font-size: var(--fs-h3);
+}
+
+/* Empêche le zoom automatique iOS au focus */
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: max(16px, 1rem);
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: var(--violet);
 }
 
 .subtitle {
   text-align: center;
-  color: #888;
-  font-size: 0.95em;
-  margin-bottom: 20px;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
 }
 
 /* ================================
@@ -37,21 +70,21 @@ h1 {
 ================================ */
 .loader {
   text-align: center;
-  padding: 60px;
-  color: #aaa;
-  font-size: 0.95em;
+  padding: var(--sp-6) var(--sp-4);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
 }
 
 /* ================================
    SHARED — kor / fr
 ================================ */
 .kor {
-  color: #5a3ea1;
+  color: var(--violet);
   font-weight: 600;
 }
 
 .fr {
-  color: #888;
+  color: var(--text-muted);
   font-style: italic;
 }
 
@@ -60,7 +93,7 @@ h1 {
 ================================ */
 .footer {
   text-align: center;
-  margin-top: 40px;
-  color: #bbb;
-  font-size: 0.82em;
+  margin-top: var(--sp-6);
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
 }

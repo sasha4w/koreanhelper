@@ -1,0 +1,58 @@
+/* ================================
+   BARRE DE RECHERCHE
+================================ */
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: var(--sp-3);
+  color: var(--text-faint);
+  pointer-events: none;
+  font-size: var(--fs-sm);
+}
+
+.search-bar input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--sp-2) 44px var(--sp-2) 40px;
+  border: 2px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--t-fast);
+}
+
+.search-bar input:focus {
+  border-color: var(--violet-border);
+}
+
+/* Masque la croix native de <input type="search"> : on fournit la nôtre */
+.search-bar input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search-clear {
+  position: absolute;
+  right: var(--sp-2);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--violet-soft);
+  color: var(--violet);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.search-clear:hover {
+  background: var(--violet-border);
+}

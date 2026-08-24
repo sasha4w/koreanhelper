@@ -1,174 +1,176 @@
-import { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import VocabCard from "../components/VocabCard";
+import SearchBar from "../components/SearchBar";
+import { useTable } from "../hooks/useTable";
+import { levelOptions, matchesLevel } from "../lib/levels";
+import { TYPE_COLORS } from "../lib/constants";
+import { normalizeFr } from "../lib/normalize";
 import "./Vocabulaire.css";
 
-const TYPE_COLORS = {
-  명사: { bg: "#EEEDFE", color: "#3C3489" },
-  동사: { bg: "#E1F5EE", color: "#085041" },
-  형용사: { bg: "#FAECE7", color: "#993C1D" },
-  부사: { bg: "#FAEEDA", color: "#854F0B" },
-  expression: { bg: "#FDE8F5", color: "#7B1F6A" },
-  의존명사: { bg: "#E8F0FD", color: "#1A3A8A" },
-  관형사: { bg: "#FDF3E8", color: "#8A4A1A" },
-  대명사: { bg: "#E8FDF3", color: "#1A6A4A" },
-  접속사: { bg: "#F3E8FD", color: "#5A1A8A" },
-  조사: { bg: "#FDE8E8", color: "#8A1A1A" },
-};
-
-function VocabSection({ title, count, children }) {
-  const [isOpen, setIsOpen] = useState(false);
+function VocabSection({ title, count, onPractice, defaultOpen, children }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen || false);
   return (
     <div className="accordion-section">
       <button
+        type="button"
         className={`accordion-header ${isOpen ? "open" : ""}`}
         onClick={() => setIsOpen((v) => !v)}
         aria-expanded={isOpen}
       >
         <span className="accordion-title">{title}</span>
-        <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "0.75em", opacity: 0.7 }}>{count} mots</span>
-          <span className="accordion-chevron">{isOpen ? "▲" : "▼"}</span>
+        <span className="accordion-right">
+          <span className="accordion-count">{count} mots</span>
+          <span className="accordion-chevron" aria-hidden="true">
+            {isOpen ? "▲" : "▼"}
+          </span>
         </span>
       </button>
-      <div
-        className={`accordion-body vocab-accordion-body ${isOpen ? "open" : ""}`}
-      >
-        {children}
+
+      <div className={`accordion-body ${isOpen ? "open" : ""}`}>
+        <div className="accordion-body-inner vocab-accordion-inner">
+          {children}
+          {onPractice && (
+            <div className="vocab-group-actions">
+              <button className="chip accent active" onClick={onPractice}>
+                🎯 S'entraîner sur ce groupe
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 export default function Vocabulaire() {
-  const [words, setWords] = useState([]);
+  const { data: words, loading, error } = useTable("vocabulaire");
+  const navigate = useNavigate();
   const [level, setLevel] = useState("all");
   const [groupBy, setGroupBy] = useState("theme");
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    const fetchWords = async () => {
-      setLoading(true);
-      let allWords = [];
-      let from = 0;
-      const pageSize = 1000;
+  const levels = useMemo(() => levelOptions(words), [words]);
 
-      while (true) {
-        const { data, error } = await supabase
-          .from("vocabulaire")
-          .select("*")
-          .order("chapitre", { ascending: true })
-          .order("partie", { ascending: true })
-          .order("id", { ascending: true })
-          .range(from, from + pageSize - 1);
+  const filtered = useMemo(() => {
+    const needle = normalizeFr(search);
+    return words.filter((w) => {
+      if (!matchesLevel(w, level)) return false;
+      if (!needle) return true;
+      return (
+        normalizeFr(w.fr || "").includes(needle) ||
+        String(w.hangul || "").includes(search.trim())
+      );
+    });
+  }, [words, level, search]);
 
-        if (error) {
-          console.error(error);
-          break;
-        }
-        if (!data || data.length === 0) break;
-
-        allWords = [...allWords, ...data];
-        if (data.length < pageSize) break;
-        from += pageSize;
-      }
-
-      setWords(allWords);
-      setLoading(false);
-    };
-    fetchWords();
-  }, []);
-
-  const filtered = words.filter(
-    (w) => level === "all" || String(w.level) === String(level),
-  );
-
-  const groups = filtered.reduce((acc, w) => {
-    let key;
-    if (groupBy === "theme") {
-      key = w.theme || "—";
-    } else {
-      key = `${String(w.chapitre).padStart(3, "0")}-${w.partie}`;
+  const groups = useMemo(() => {
+    const map = new Map();
+    for (const w of filtered) {
+      const key =
+        groupBy === "theme"
+          ? w.theme || "—"
+          : `${String(w.chapitre).padStart(3, "0")}-${w.partie}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(w);
     }
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(w);
-    return acc;
-  }, {});
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, "fr"));
+  }, [filtered, groupBy]);
 
-  const sortedKeys = Object.keys(groups).sort();
+  const searching = Boolean(search.trim());
 
-  const getGroupLabel = (key) => {
+  const groupLabel = (key) => {
     if (groupBy === "theme") return key;
     const [chap, part] = key.split("-");
-    return `Chapitre ${parseInt(chap)} · Partie ${part}`;
+    return `Chapitre ${parseInt(chap, 10)} · Partie ${part}`;
   };
 
-  if (loading) return <div className="loader">Chargement...</div>;
+  const practice = (key, items) => {
+    const params = new URLSearchParams({ level });
+    if (groupBy === "theme") params.set("theme", key);
+    else {
+      params.set("chapitre", String(items[0].chapitre));
+      params.set("partie", String(items[0].partie));
+    }
+    navigate(`/entrainement?${params.toString()}`);
+  };
+
+  if (loading) return <div className="loader">Chargement…</div>;
+  if (error)
+    return <p className="empty-state">Impossible de charger le vocabulaire.</p>;
 
   return (
-    <>
-      {/* Légende des types */}
-      <div className="legend">
-        <span className="legend-label">Types :</span>
-        {Object.entries(TYPE_COLORS).map(([type, s]) => (
-          <span
-            key={type}
-            className="tag"
-            style={{ background: s.bg, color: s.color }}
+    <div className="stack">
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Chercher un mot (français ou 한글)"
+      />
+
+      {/* Filtres */}
+      <div className="scroll-x">
+        {levels.map(({ value, label }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setLevel(value)}
+            className={`chip ${level === value ? "active" : ""}`}
           >
-            {type}
-          </span>
+            {label}
+          </button>
+        ))}
+        {[
+          { value: "theme", label: "Par thème" },
+          { value: "chapitre", label: "Par chapitre" },
+        ].map(({ value, label }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setGroupBy(value)}
+            className={`chip accent ${groupBy === value ? "active" : ""}`}
+          >
+            {label}
+          </button>
         ))}
       </div>
 
-      {/* Filtres */}
-      <div className="filter-container">
-        <div className="filter-group">
-          {[
-            { value: "all", label: "Tout voir" },
-            { value: "1", label: "Niveau 1" },
-            { value: "2", label: "Niveau 2" },
-          ].map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => setLevel(value)}
-              className={`filter-btn ${level === value ? "active" : ""}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="filter-divider" />
-        <div className="filter-group">
-          {[
-            { value: "theme", label: "Par thème" },
-            { value: "chapitre", label: "Par chapitre" },
-          ].map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => setGroupBy(value)}
-              className={`filter-btn secondary ${groupBy === value ? "active" : ""}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <p className="vocab-count">
+        {filtered.length} mot{filtered.length > 1 ? "s" : ""}
+      </p>
 
-      {/* Accordions */}
-      {sortedKeys.length === 0 ? (
-        <p style={{ textAlign: "center", color: "#aaa" }}>Aucun mot trouvé.</p>
+      {/* Légende des types */}
+      <details className="vocab-legend-wrap">
+        <summary>Légende des types</summary>
+        <div className="legend">
+          {Object.entries(TYPE_COLORS).map(([type, s]) => (
+            <span
+              key={type}
+              className="tag"
+              style={{ background: s.bg, color: s.color }}
+            >
+              {type}
+            </span>
+          ))}
+        </div>
+      </details>
+
+      {groups.length === 0 ? (
+        <p className="empty-state">Aucun mot trouvé.</p>
       ) : (
-        sortedKeys.map((key) => (
+        groups.map(([key, items]) => (
           <VocabSection
-            key={key}
-            title={getGroupLabel(key)}
-            count={groups[key].length}
+            /* En recherche, les sections se remontent ouvertes : sinon les
+               résultats restent cachés derrière des accordéons fermés. */
+            key={`${key}:${searching}`}
+            title={groupLabel(key)}
+            count={items.length}
+            defaultOpen={searching}
+            onPractice={() => practice(key, items)}
           >
-            <VocabCard words={groups[key]} />
+            <VocabCard words={items} />
           </VocabSection>
         ))
       )}
-    </>
+    </div>
   );
 }

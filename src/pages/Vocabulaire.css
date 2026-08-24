@@ -1,61 +1,48 @@
 /* ================================
-   VOCABULAIRE — FILTRES
+   VOCABULAIRE
+   (les filtres vivent dans styles/components.css)
 ================================ */
-.filter-container {
+
+/* Corps d'accordéon : padding latéral propre au vocabulaire */
+.accordion-body.open .vocab-accordion-inner {
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
+}
+
+/* ================================
+   EN-TÊTE DE GROUPE
+================================ */
+.vocab-group-actions {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0 30px 0;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 0 var(--sp-3) var(--sp-3);
 }
 
-/* Groupe de boutons dans une pill */
-.filter-group {
-  display: flex;
-  gap: 6px;
-  background: white;
-  border-radius: 30px;
-  padding: 5px;
-  box-shadow: 0 2px 8px rgba(90, 62, 161, 0.1);
+.vocab-count {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
 }
 
-.filter-divider {
-  width: 1px;
-  height: 36px;
-  background: #e0d8ff;
-}
-
-.filter-btn {
-  padding: 7px 18px;
-  border: none;
-  background: transparent;
-  color: #888;
-  border-radius: 25px;
-  font-weight: 600;
+/* ================================
+   LÉGENDE REPLIABLE
+================================ */
+.vocab-legend-wrap summary {
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.88rem;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  padding: var(--sp-2);
+  list-style: none;
 }
 
-.filter-btn:hover {
-  color: #5a3ea1;
-  background: #f0eaff;
+.vocab-legend-wrap summary::-webkit-details-marker {
+  display: none;
 }
 
-.filter-btn.active {
-  background: #5a3ea1;
-  color: white;
-  box-shadow: 0 3px 10px rgba(90, 62, 161, 0.3);
+.vocab-legend-wrap summary::before {
+  content: "▸ ";
 }
 
-/* Variante secondaire (groupement par thème / chapitre) */
-.filter-btn.secondary.active {
-  background: #e07bb5;
-  box-shadow: 0 3px 10px rgba(224, 123, 181, 0.3);
-}
-
-.filter-btn.secondary:hover {
-  color: #e07bb5;
-  background: #fdf0f7;
+.vocab-legend-wrap[open] summary::before {
+  content: "▾ ";
 }

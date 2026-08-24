@@ -1,0 +1,447 @@
+/* ================================
+   PRIMITIVES PARTAGÉES — mobile-first
+   Tout ce qui était dupliqué entre pages vit ici.
+================================ */
+
+/* ── Wrapper de page ── */
+.page {
+  width: 100%;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: var(--sp-4) var(--sp-3);
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-5));
+}
+
+.page.wide {
+  max-width: var(--page-max-wide);
+}
+
+@media (min-width: 768px) {
+  .page {
+    padding: var(--sp-5) var(--sp-4) var(--sp-6);
+  }
+}
+
+/* ── Pile verticale ── */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.stack.tight {
+  gap: var(--sp-2);
+}
+.stack.loose {
+  gap: var(--sp-5);
+}
+
+/* ── Grille de cartes (définition unique) ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 0 var(--sp-3);
+}
+
+@media (min-width: 768px) {
+  .grid {
+    gap: var(--sp-4);
+    padding: 0 var(--sp-4);
+  }
+}
+
+/* ── Rangée scrollable horizontalement (filtres, tags) ── */
+.scroll-x {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--sp-1) var(--sp-1) var(--sp-2);
+  margin: 0 calc(var(--sp-3) * -1);
+  padding-left: var(--sp-3);
+  padding-right: var(--sp-3);
+  scroll-snap-type: x proximity;
+}
+
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-x > * {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 768px) {
+  .scroll-x {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    justify-content: center;
+  }
+}
+
+/* ================================
+   BOUTONS
+   Fusionne .quiz-btn / .exo-btn / boutons d'action.
+================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap);
+  padding: var(--sp-3) var(--sp-4);
+  border: none;
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+  -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--violet-border);
+  outline-offset: 2px;
+}
+
+.btn.block {
+  width: 100%;
+}
+
+.btn.primary {
+  background: var(--violet);
+  color: var(--text-on-violet);
+  box-shadow: var(--shadow-md);
+}
+.btn.primary:hover:not(:disabled) {
+  background: var(--violet-hover);
+}
+
+.btn.next {
+  background: var(--success-strong);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+.btn.next:hover:not(:disabled) {
+  background: #256a44;
+}
+
+.btn.secondary {
+  background: var(--surface);
+  color: var(--violet);
+  border: 2px solid var(--violet-border);
+}
+.btn.secondary:hover:not(:disabled) {
+  background: var(--violet-soft);
+}
+
+.btn.accent {
+  background: var(--rose);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+.btn.accent:hover:not(:disabled) {
+  background: var(--rose-hover);
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--text-muted);
+}
+.btn.ghost:hover:not(:disabled) {
+  background: var(--violet-soft);
+  color: var(--violet);
+}
+
+.btn.gradient {
+  background: linear-gradient(135deg, var(--violet), var(--rose));
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+/* ================================
+   CHIPS (filtres, tags cliquables)
+================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 38px;
+  padding: var(--sp-2) var(--sp-4);
+  border: 2px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--t-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chip:hover:not(.active) {
+  border-color: var(--violet-border);
+  color: var(--violet);
+}
+
+.chip.active {
+  background: var(--violet);
+  border-color: var(--violet);
+  color: var(--text-on-violet);
+  box-shadow: var(--shadow-sm);
+}
+
+.chip.accent.active {
+  background: var(--rose);
+  border-color: var(--rose);
+}
+
+.chip:focus-visible {
+  outline: 3px solid var(--violet-border);
+  outline-offset: 2px;
+}
+
+/* ================================
+   CONTRÔLE SEGMENTÉ
+================================ */
+.segmented {
+  display: inline-flex;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: var(--surface);
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow-sm);
+}
+
+.segmented button {
+  flex: 1;
+  min-height: 38px;
+  padding: var(--sp-2) var(--sp-4);
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--t-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.segmented button.active {
+  background: var(--violet);
+  color: var(--text-on-violet);
+}
+
+.segmented-row {
+  display: flex;
+  justify-content: center;
+}
+
+.segmented-row .segmented {
+  max-width: 100%;
+}
+
+/* ================================
+   FILTRES (legacy — utilisés par
+   Vocabulaire / Quiz / LessonList)
+================================ */
+.filter-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  gap: var(--sp-1);
+  background: var(--surface);
+  border-radius: var(--r-pill);
+  padding: var(--sp-1);
+  box-shadow: var(--shadow-sm);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter-group::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-divider {
+  width: 1px;
+  height: 30px;
+  background: var(--border);
+}
+
+.filter-btn {
+  min-height: 38px;
+  padding: var(--sp-2) var(--sp-4);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--r-pill);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-btn:hover:not(.active) {
+  color: var(--violet);
+  background: var(--violet-softer);
+}
+
+.filter-btn.active {
+  background: var(--violet);
+  color: var(--text-on-violet);
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-btn.secondary.active {
+  background: var(--rose);
+}
+
+.filter-btn.secondary:hover:not(.active) {
+  color: var(--rose);
+  background: #fdf0f7;
+}
+
+/* ================================
+   TAGS (non cliquables)
+================================ */
+.tag {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  border-radius: var(--r-pill);
+  padding: 2px 10px;
+  margin-right: var(--sp-1);
+  margin-bottom: var(--sp-2);
+  background: var(--violet-soft);
+  color: var(--violet-light);
+  white-space: nowrap;
+}
+
+.tag.blue {
+  background: #e8f4fd;
+  color: #1a6fa8;
+}
+.tag.green {
+  background: #e6f9ee;
+  color: #2e7d52;
+}
+.tag.red {
+  background: #fdecea;
+  color: #c0392b;
+}
+.tag.orange {
+  background: #fff3e0;
+  color: #a85f00;
+}
+.tag.purple {
+  background: #ede8ff;
+  color: #5a3ea1;
+}
+.tag.teal {
+  background: #e0f7fa;
+  color: #006064;
+}
+.tag.yellow {
+  background: #fffde7;
+  color: #8a6100;
+}
+.tag.indigo {
+  background: #e8eaf6;
+  color: #283593;
+}
+
+/* ================================
+   PANNEAU / SURFACE GÉNÉRIQUE
+================================ */
+.panel {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ================================
+   BARRE DE PROGRESSION
+================================ */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--violet-soft);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet), var(--rose));
+  border-radius: var(--r-pill);
+  transition: width var(--t);
+}
+
+/* ================================
+   ÉTATS
+================================ */
+.empty-state {
+  text-align: center;
+  padding: var(--sp-6) var(--sp-4);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* ================================
+   ACCESSIBILITÉ
+================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
