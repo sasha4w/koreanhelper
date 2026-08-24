@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import ExerciseRunner from "../components/ExerciseRunner";
+import ChipList from "../components/ChipList";
+import { Brain } from "../components/Icon";
 import { useTable } from "../hooks/useTable";
 import { deriveLevels } from "../lib/levels";
 import { availableChapters } from "../lib/exercises/buildSession";
@@ -61,8 +63,8 @@ export default function Quiz() {
   return (
     <div className="stack loose">
       <header className="quiz-hero">
-        <span className="quiz-hero-icon" aria-hidden="true">
-          🧠
+        <span className="quiz-hero-icon">
+          <Brain />
         </span>
         <h2>Quiz par chapitre</h2>
         <p className="subtitle">
@@ -85,17 +87,11 @@ export default function Quiz() {
       </div>
 
       {levels.length > 1 && (
-        <div className="scroll-x">
-          {levels.map((l) => (
-            <button
-              key={l}
-              className={`chip ${activeLevel === l ? "active" : ""}`}
-              onClick={() => setLevel(l)}
-            >
-              Niveau {l}
-            </button>
-          ))}
-        </div>
+        <ChipList
+          options={levels.map((l) => ({ value: l, label: `Niveau ${l}` }))}
+          value={activeLevel}
+          onChange={setLevel}
+        />
       )}
 
       {chapters.length === 0 ? (

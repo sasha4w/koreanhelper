@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import VocabCard from "../components/VocabCard";
 import SearchBar from "../components/SearchBar";
+import ChipList from "../components/ChipList";
+import { Target } from "../components/Icon";
 import { useTable } from "../hooks/useTable";
 import { levelOptions, matchesLevel } from "../lib/levels";
 import { TYPE_COLORS } from "../lib/constants";
@@ -33,7 +35,7 @@ function VocabSection({ title, count, onPractice, defaultOpen, children }) {
           {onPractice && (
             <div className="vocab-group-actions">
               <button className="chip accent active" onClick={onPractice}>
-                🎯 S'entraîner sur ce groupe
+                <Target /> S'entraîner sur ce groupe
               </button>
             </div>
           )}
@@ -108,30 +110,23 @@ export default function Vocabulaire() {
       />
 
       {/* Filtres */}
-      <div className="scroll-x">
-        {levels.map(({ value, label }) => (
+      <ChipList options={levels} value={level} onChange={setLevel} />
+
+      <div className="segmented-row">
+        <div className="segmented">
           <button
-            key={value}
-            type="button"
-            onClick={() => setLevel(value)}
-            className={`chip ${level === value ? "active" : ""}`}
+            className={groupBy === "theme" ? "active" : ""}
+            onClick={() => setGroupBy("theme")}
           >
-            {label}
+            Par thème
           </button>
-        ))}
-        {[
-          { value: "theme", label: "Par thème" },
-          { value: "chapitre", label: "Par chapitre" },
-        ].map(({ value, label }) => (
           <button
-            key={value}
-            type="button"
-            onClick={() => setGroupBy(value)}
-            className={`chip accent ${groupBy === value ? "active" : ""}`}
+            className={groupBy === "chapitre" ? "active" : ""}
+            onClick={() => setGroupBy("chapitre")}
           >
-            {label}
+            Par chapitre
           </button>
-        ))}
+        </div>
       </div>
 
       <p className="vocab-count">

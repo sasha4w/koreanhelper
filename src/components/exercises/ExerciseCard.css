@@ -17,10 +17,22 @@
   letter-spacing: 0.5px;
 }
 
-/* ── Saisie libre ── */
+/* Révélation de la forme correcte pour "Reconnaître la règle", affichée
+   juste au-dessus de la description dès que l'exercice est corrigé. */
+.ex-answer-form {
+  text-align: center;
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  color: var(--success-strong);
+  margin-bottom: var(--sp-1);
+}
+
+/* ── Saisie libre ──
+   Un <span> miroir invisible (.ex-input-mirror) mesure le texte tapé ;
+   l'input suit cette largeur pour ne jamais masquer ce qui vient d'être écrit. */
 .ex-input {
-  width: 100%;
   min-height: var(--tap);
+  max-width: 100%;
   padding: var(--sp-3) var(--sp-4);
   border: 2px solid var(--border-strong);
   border-radius: var(--r-md);
@@ -28,7 +40,14 @@
   color: var(--text);
   text-align: center;
   outline: none;
-  transition: border-color var(--t-fast);
+  transition:
+    border-color var(--t-fast),
+    width 0.12s ease;
+}
+
+.ex-input.auto {
+  display: block;
+  margin: 0 auto;
 }
 
 .ex-input:focus {
@@ -38,6 +57,22 @@
 .ex-input:disabled {
   background: var(--surface-alt);
   color: var(--text-muted);
+}
+
+.ex-input-mirror {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  white-space: pre;
+  font: inherit;
+  font-size: max(16px, 1rem);
+}
+
+.ex-input-mirror.ko {
+  font-weight: 600;
 }
 
 /* ── QCM ── */
@@ -196,14 +231,42 @@
 
 .ex-match-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  padding: var(--sp-2) var(--sp-3);
+  flex-direction: column;
+  padding: 2px;
   border: 2px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
+  transition: all var(--t-fast);
+}
+
+.ex-match-row-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
   min-height: var(--tap);
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ex-match-row-btn:disabled {
+  cursor: default;
+}
+
+.ex-match-row-btn:focus-visible {
+  outline: 3px solid var(--violet-border);
+  outline-offset: -3px;
+}
+
+.ex-match-fix {
+  padding: 0 var(--sp-3) var(--sp-2);
 }
 
 .ex-match-row.active {

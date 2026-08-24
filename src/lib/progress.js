@@ -144,6 +144,18 @@ export function priority(sourceKey, now = Date.now()) {
   return 60 + failRate * 40 - (entry.box - 1) * 5;
 }
 
+/** Items dus, triés du plus urgent (le plus raté) au moins urgent. */
+export function getDueEntries(now = Date.now()) {
+  return Object.entries(read().items)
+    .filter(([, e]) => isDue(e, now))
+    .map(([key, entry]) => ({ key, entry }))
+    .sort((a, b) => {
+      const failA = a.entry.seen ? a.entry.wrong / a.entry.seen : 0;
+      const failB = b.entry.seen ? b.entry.wrong / b.entry.seen : 0;
+      return failB - failA || a.entry.box - b.entry.box;
+    });
+}
+
 export function getStats() {
   const state = read();
   const entries = Object.entries(state.items);

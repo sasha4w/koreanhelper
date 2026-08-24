@@ -7,8 +7,26 @@ import {
   isAnswerReady,
 } from "../lib/exercises/check";
 import { recordAnswer, recordSession } from "../lib/progress";
-import { KIND_ICONS, KIND_LABELS } from "../lib/constants";
+import { DEFAULT_KIND_ICON, KIND_ICONS, KIND_LABELS } from "../lib/constants";
+import {
+  Bulb,
+  CheckCircle,
+  ChevronRight,
+  Pin,
+  BookOpen,
+  RotateCcw,
+  ThumbsUp,
+  Trophy,
+  Zap,
+} from "./Icon";
 import "./ExerciseRunner.css";
+
+function resultTier(pct) {
+  if (pct === 100) return { Icon: Trophy, tone: "gold" };
+  if (pct >= 70) return { Icon: ThumbsUp, tone: "good" };
+  if (pct >= 40) return { Icon: Zap, tone: "mid" };
+  return { Icon: RotateCcw, tone: "low" };
+}
 
 /**
  * Moteur d'exécution commun à toutes les sessions (quiz, exercices générés,
@@ -55,14 +73,13 @@ export default function ExerciseRunner({
   /* ── Écran de résultat ── */
   if (finished || !current) {
     const pct = total ? Math.round((score / total) * 100) : 0;
-    const emoji =
-      pct === 100 ? "🎉" : pct >= 70 ? "👍" : pct >= 40 ? "💪" : "😅";
+    const { Icon: ResultIcon, tone } = resultTier(pct);
 
     return (
       <div className="stack loose">
         <div className="run-result">
-          <span className="run-result-emoji" aria-hidden="true">
-            {emoji}
+          <span className={`run-result-icon tone-${tone}`}>
+            <ResultIcon />
           </span>
           <h2 className="run-result-score">
             {score} <span>/ {total}</span>
@@ -112,6 +129,8 @@ export default function ExerciseRunner({
   }
 
   /* ── Écran d'exercice ── */
+  const KindIcon = KIND_ICONS[current.kind] || DEFAULT_KIND_ICON;
+
   return (
     <div className="stack">
       <div className="progress-bar">
@@ -123,13 +142,14 @@ export default function ExerciseRunner({
 
       <div className="run-meta">
         <span className="run-kind">
-          <span aria-hidden="true">{KIND_ICONS[current.kind] || "✏️"}</span>{" "}
-          {KIND_LABELS[current.kind] || title || "Exercice"}
+          <KindIcon /> {KIND_LABELS[current.kind] || title || "Exercice"}
         </span>
         <span>
           {index + 1} / {total}
         </span>
-        <span className="run-score">✓ {score}</span>
+        <span className="run-score">
+          <CheckCircle /> {score}
+        </span>
       </div>
 
       {/* La `key` remonte le composant à chaque exercice : l'état de la
@@ -167,6 +187,9 @@ function ExerciseStep({ exo, isLast, onResult, onNext, onQuit }) {
   };
 
   const ready = isAnswerReady(exo, value);
+  // Pour "grammar-qcm", la réponse est révélée juste au-dessus de la question
+  // par ExerciseCard lui-même : pas de doublon en bas de carte pour ce type.
+  const showBottomAnswer = submitted && !ok && exo.kind !== "grammar-qcm";
 
   return (
     <>
@@ -174,7 +197,9 @@ function ExerciseStep({ exo, isLast, onResult, onNext, onQuit }) {
         <p className="run-prompt">{exo.prompt}</p>
         {exo.promptSub && <p className="run-prompt-sub">{exo.promptSub}</p>}
         {exo.grammarPoint && (
-          <span className="run-grammar">📌 {exo.grammarPoint}</span>
+          <span className="run-grammar">
+            <Pin /> {exo.grammarPoint}
+          </span>
         )}
 
         <ExerciseCard
@@ -186,16 +211,22 @@ function ExerciseStep({ exo, isLast, onResult, onNext, onQuit }) {
           detail={detail}
         />
 
-        {!submitted && exo.hint && <p className="run-hint">💡 {exo.hint}</p>}
+        {!submitted && exo.hint && (
+          <p className="run-hint">
+            <Bulb /> {exo.hint}
+          </p>
+        )}
 
-        {submitted && !ok && (
+        {showBottomAnswer && (
           <p className="run-answer">
             Réponse : <strong>{displayAnswer(exo)}</strong>
           </p>
         )}
 
         {submitted && exo.explanation && (
-          <p className="run-explanation">📖 {exo.explanation}</p>
+          <p className="run-explanation">
+            <BookOpen /> {exo.explanation}
+          </p>
         )}
       </div>
 
@@ -215,7 +246,7 @@ function ExerciseStep({ exo, isLast, onResult, onNext, onQuit }) {
           </>
         ) : (
           <button className="btn next block" onClick={onNext} autoFocus>
-            {isLast ? "Résultats →" : "Suivant →"}
+            {isLast ? "Résultats" : "Suivant"} <ChevronRight />
           </button>
         )}
         <button className="btn ghost block" onClick={onQuit}>

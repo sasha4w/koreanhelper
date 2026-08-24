@@ -47,8 +47,12 @@
 }
 
 .nav-icon {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   line-height: 1;
+}
+
+.nav-icon .icon {
+  vertical-align: 0;
 }
 
 .nav-label {

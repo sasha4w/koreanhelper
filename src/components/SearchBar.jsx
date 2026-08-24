@@ -1,11 +1,12 @@
+import { Search, X } from "./Icon";
 import "./SearchBar.css";
 
 /** Champ de recherche réutilisable (vocabulaire, grammaire, verbes). */
 export default function SearchBar({ value, onChange, placeholder, label }) {
   return (
     <div className="search-bar">
-      <span className="search-icon" aria-hidden="true">
-        🔍
+      <span className="search-icon">
+        <Search />
       </span>
       <input
         type="search"
@@ -24,7 +25,7 @@ export default function SearchBar({ value, onChange, placeholder, label }) {
           onClick={() => onChange("")}
           aria-label="Effacer la recherche"
         >
-          ✕
+          <X />
         </button>
       )}
     </div>

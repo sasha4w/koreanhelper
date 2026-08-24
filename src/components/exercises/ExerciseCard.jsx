@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BLANK_KINDS, CHOICE_KINDS } from "../../lib/exercises/check";
+import { useAutoWidth } from "../../hooks/useAutoWidth";
 import "./ExerciseCard.css";
 
 /**
@@ -37,6 +38,14 @@ export default function ExerciseCard({
 
 function InputBody({ exo, value, onChange, onSubmit, submitted }) {
   const ref = useRef(null);
+  const text = value || "";
+  const placeholder = exo.lang === "ko" ? "한글..." : "Ta réponse...";
+  // `extra` couvre le padding + la bordure de .ex-input (box-sizing: border-box) :
+  // sans cette marge, la zone de texte réelle serait plus étroite que le texte mesuré.
+  const { width, mirrorRef } = useAutoWidth(text || placeholder, {
+    min: 120,
+    extra: 44,
+  });
 
   useEffect(() => {
     if (!submitted) ref.current?.focus();
@@ -45,21 +54,29 @@ function InputBody({ exo, value, onChange, onSubmit, submitted }) {
   return (
     <>
       <p className="ex-question">{exo.question}</p>
+      <span
+        ref={mirrorRef}
+        className={`ex-input-mirror ${exo.lang === "ko" ? "ko" : ""}`}
+        aria-hidden="true"
+      >
+        {text || placeholder}
+      </span>
       <input
         ref={ref}
-        className="ex-input"
+        className="ex-input auto"
         type="text"
-        value={value || ""}
+        value={text}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSubmit()}
         disabled={submitted}
-        placeholder={exo.lang === "ko" ? "한글..." : "Ta réponse..."}
+        placeholder={placeholder}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
         lang={exo.lang === "ko" ? "ko" : "fr"}
         aria-label="Ta réponse"
+        style={{ width }}
       />
     </>
   );
@@ -68,8 +85,14 @@ function InputBody({ exo, value, onChange, onSubmit, submitted }) {
 /* ───────────────── QCM ───────────────── */
 
 function ChoiceBody({ exo, value, onChange, submitted }) {
+  // "Reconnaître la règle" : la forme correcte est révélée juste au-dessus
+  // de la description dès la correction, plutôt qu'en bas de carte.
+  const revealForm = submitted && exo.kind === "grammar-qcm";
+
   return (
     <>
+      {revealForm && <p className="ex-answer-form ko">{exo.expected}</p>}
+
       {exo.question && (
         <p className={`ex-question ${exo.questionLang === "ko" ? "ko" : ""}`}>
           {exo.question}
@@ -141,34 +164,52 @@ function BlanksBody({ exo, value, onChange, onSubmit, submitted, detail }) {
             : "wrong"
           : "";
         return (
-          <span key={i} className="ex-blank">
-            <input
-              ref={(el) => {
-                refs.current[seg.index] = el;
-              }}
-              className={`ex-blank-input ${status}`}
-              type="text"
-              value={value?.[seg.index] || ""}
-              onChange={(e) =>
-                onChange({ ...value, [seg.index]: e.target.value })
-              }
-              onKeyDown={(e) => handleKey(e, seg.index)}
-              disabled={submitted}
-              placeholder="···"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              style={{ width: `min(${Math.max(seg.answer.length + 2, 5)}ch, 100%)` }}
-              aria-label={`Trou ${seg.index + 1}`}
-            />
-            {status === "wrong" && (
-              <span className="ex-blank-fix">{seg.answer}</span>
-            )}
-          </span>
+          <BlankToken
+            key={i}
+            seg={seg}
+            value={value?.[seg.index] || ""}
+            status={status}
+            submitted={submitted}
+            registerRef={(el) => {
+              refs.current[seg.index] = el;
+            }}
+            onChange={(v) => onChange({ ...value, [seg.index]: v })}
+            onKeyDown={(e) => handleKey(e, seg.index)}
+          />
         );
       })}
     </p>
+  );
+}
+
+function BlankToken({ seg, value, status, submitted, registerRef, onChange, onKeyDown }) {
+  const { width, mirrorRef } = useAutoWidth(value || "···", {
+    min: Math.max(seg.answer.length, 2) * 15 + 24,
+  });
+
+  return (
+    <span className="ex-blank">
+      <span ref={mirrorRef} className="ex-input-mirror ko" aria-hidden="true">
+        {value || "···"}
+      </span>
+      <input
+        ref={registerRef}
+        className={`ex-blank-input ${status}`}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        disabled={submitted}
+        placeholder="···"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        style={{ width }}
+        aria-label={`Trou ${seg.index + 1}`}
+      />
+      {status === "wrong" && <span className="ex-blank-fix">{seg.answer}</span>}
+    </span>
   );
 }
 
@@ -176,21 +217,32 @@ function BlanksBody({ exo, value, onChange, onSubmit, submitted, detail }) {
 
 function MatchingBody({ exo, value, onChange, submitted, detail }) {
   // value = { [pairId]: frChoisi }
-  const usedFr = new Set(Object.values(value || {}));
-  const activeId = exo.pairs.find((p) => !value?.[p.id])?.id;
+  const [selectedId, setSelectedId] = useState(
+    () => exo.pairs.find((p) => !value?.[p.id])?.id ?? exo.pairs[0]?.id,
+  );
   const frOptions = shuffleStable(exo); // déterministe : ordre stable entre rendus
 
+  const selectRow = (id) => {
+    if (!submitted) setSelectedId(id);
+  };
+
+  // Toggle libre : taper un mot déjà placé le libère, où qu'il soit ;
+  // taper un mot libre l'assigne à la ligne actuellement ciblée.
   const assign = (fr) => {
     if (submitted) return;
-    // Retirer une association existante = re-tapper le mot déjà associé
     const owner = Object.keys(value || {}).find((k) => value[k] === fr);
     if (owner) {
       const next = { ...value };
       delete next[owner];
-      return onChange(next);
+      onChange(next);
+      return;
     }
-    if (!activeId) return;
-    onChange({ ...value, [activeId]: fr });
+    if (selectedId == null) return;
+    onChange({ ...value, [selectedId]: fr });
+    const nextEmpty = exo.pairs.find(
+      (p) => p.id !== selectedId && !value?.[p.id],
+    );
+    if (nextEmpty) setSelectedId(nextEmpty.id);
   };
 
   return (
@@ -202,18 +254,23 @@ function MatchingBody({ exo, value, onChange, submitted, detail }) {
             ? detail?.results?.[pair.id]
               ? "correct"
               : "wrong"
-            : pair.id === activeId
+            : pair.id === selectedId
               ? "active"
               : "";
           return (
             <li key={pair.id} className={`ex-match-row ${status}`}>
-              <span className="ex-match-ko ko">{pair.ko}</span>
-              <span className="ex-match-slot">
-                {chosen || <em>?</em>}
-                {submitted && !detail?.results?.[pair.id] && (
-                  <span className="ex-blank-fix">{pair.fr}</span>
-                )}
-              </span>
+              <button
+                type="button"
+                className="ex-match-row-btn"
+                onClick={() => selectRow(pair.id)}
+                disabled={submitted}
+              >
+                <span className="ex-match-ko ko">{pair.ko}</span>
+                <span className="ex-match-slot">{chosen || <em>?</em>}</span>
+              </button>
+              {submitted && !detail?.results?.[pair.id] && (
+                <span className="ex-blank-fix ex-match-fix">{pair.fr}</span>
+              )}
             </li>
           );
         })}
@@ -221,16 +278,19 @@ function MatchingBody({ exo, value, onChange, submitted, detail }) {
 
       {!submitted && (
         <div className="ex-match-options">
-          {frOptions.map((fr) => (
-            <button
-              key={fr}
-              type="button"
-              className={`chip ${usedFr.has(fr) ? "active" : ""}`}
-              onClick={() => assign(fr)}
-            >
-              {fr}
-            </button>
-          ))}
+          {frOptions.map((fr) => {
+            const used = Object.values(value || {}).includes(fr);
+            return (
+              <button
+                key={fr}
+                type="button"
+                className={`chip ${used ? "active" : ""}`}
+                onClick={() => assign(fr)}
+              >
+                {fr}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

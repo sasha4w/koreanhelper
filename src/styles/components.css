@@ -52,35 +52,37 @@
   }
 }
 
-/* ── Rangée scrollable horizontalement (filtres, tags) ── */
-.scroll-x {
+/* ── Rangée de chips qui s'enroule (filtres, tags) — jamais de scroll
+   horizontal : au-delà de `max`, ChipList affiche un bouton « +N ». ── */
+.chip-list {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-2);
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  padding: var(--sp-1) var(--sp-1) var(--sp-2);
-  margin: 0 calc(var(--sp-3) * -1);
-  padding-left: var(--sp-3);
-  padding-right: var(--sp-3);
-  scroll-snap-type: x proximity;
+  justify-content: center;
 }
 
-.scroll-x::-webkit-scrollbar {
-  display: none;
+/* Rangée simple de boutons (bascules à 2-3 options, pas de repli) */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: center;
 }
 
-.scroll-x > * {
-  flex-shrink: 0;
-  scroll-snap-align: start;
+.chip-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface-alt);
+  border-style: dashed;
+  color: var(--text-muted);
 }
 
-@media (min-width: 768px) {
-  .scroll-x {
-    flex-wrap: wrap;
-    overflow-x: visible;
-    justify-content: center;
-  }
+.chip-more-icon {
+  transition: transform var(--t-fast);
+}
+.chip-more-icon.up {
+  transform: rotate(180deg);
 }
 
 /* ================================
@@ -235,6 +237,10 @@
 }
 
 .segmented button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   flex: 1;
   min-height: 38px;
   padding: var(--sp-2) var(--sp-4);
@@ -420,6 +426,15 @@
   padding: var(--sp-6) var(--sp-4);
   color: var(--text-muted);
   font-size: var(--fs-sm);
+}
+
+/* ================================
+   ICÔNES
+================================ */
+.icon {
+  display: inline-block;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
 }
 
 /* ================================

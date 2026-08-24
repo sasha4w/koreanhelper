@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import Section from "./Section";
 import Card from "./Card";
 import SearchBar from "./SearchBar";
+import ChipList from "./ChipList";
 import { useTable } from "../hooks/useTable";
 import { levelOptions, matchesLevel } from "../lib/levels";
 import { normalizeFr } from "../lib/normalize";
@@ -72,18 +73,7 @@ export default function LessonList({ table, placeholder }) {
       />
 
       {options.length > 2 && (
-        <div className="scroll-x">
-          {options.map(({ value, label }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setLevel(value)}
-              className={`chip ${level === value ? "active" : ""}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <ChipList options={options} value={level} onChange={setLevel} />
       )}
 
       {searching && (

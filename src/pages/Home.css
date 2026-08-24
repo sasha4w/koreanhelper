@@ -6,6 +6,10 @@
 }
 
 .home-hero h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
   color: var(--violet);
   margin-bottom: var(--sp-1);
 }
@@ -29,14 +33,32 @@
   align-items: center;
   gap: 2px;
   padding: var(--sp-3) var(--sp-2);
+  border: 2px solid transparent;
   border-radius: var(--r-md);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
   text-align: center;
+  font-family: inherit;
+  transition: all var(--t-fast);
+}
+
+.home-stat.clickable {
+  cursor: pointer;
+  min-height: var(--tap);
+}
+
+.home-stat.clickable:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.home-stat.active {
+  border-color: var(--violet-border);
+  background: var(--violet-softer);
 }
 
 .home-stat-icon {
   font-size: 1.25rem;
+  color: var(--violet-light);
 }
 
 .home-stat-value {
@@ -52,6 +74,88 @@
   line-height: 1.2;
 }
 
+/* ── Panneau « à réviser » ── */
+.home-due-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  animation: page-in 0.2s ease both;
+}
+
+.home-due-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home-due-head h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--violet);
+}
+
+.home-due-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--violet-soft);
+  color: var(--violet);
+  cursor: pointer;
+}
+
+.home-due-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.home-due-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+}
+
+.home-due-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.home-due-label.ko {
+  color: var(--violet);
+}
+
+.home-due-sub {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.home-due-more {
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
 /* ── Appel à l'action ── */
 .home-cta {
   min-height: 56px;
@@ -59,9 +163,21 @@
 }
 
 .home-today {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   text-align: center;
   font-size: var(--fs-sm);
   color: var(--text-muted);
+}
+
+.home-today-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--success-strong);
+  font-weight: 600;
 }
 
 /* ── Raccourcis ── */
@@ -96,8 +212,15 @@
 }
 
 .home-link-icon {
-  font-size: 1.5rem;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
+  border-radius: var(--r-md);
+  background: var(--violet-soft);
+  color: var(--violet);
+  font-size: 1.2rem;
 }
 
 .home-link-text {
@@ -119,6 +242,8 @@
 }
 
 .home-link-arrow {
+  display: flex;
   color: var(--violet-border);
   flex-shrink: 0;
+  font-size: 1.1rem;
 }

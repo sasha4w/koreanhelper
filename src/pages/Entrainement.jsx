@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ExerciseRunner from "../components/ExerciseRunner";
+import ChipList from "../components/ChipList";
+import { Target } from "../components/Icon";
 import { useTables } from "../hooks/useTable";
 import { deriveLevels } from "../lib/levels";
 import {
@@ -8,7 +10,12 @@ import {
   availableThemes,
   buildSession,
 } from "../lib/exercises/buildSession";
-import { KIND_ICONS, KIND_LABELS, KINDS_NEEDING_IME } from "../lib/constants";
+import {
+  DEFAULT_KIND_ICON,
+  KIND_ICONS,
+  KIND_LABELS,
+  KINDS_NEEDING_IME,
+} from "../lib/constants";
 import "./Entrainement.css";
 
 const TABLES = ["vocabulaire", "grammaire", "verbes", "exercices"];
@@ -149,8 +156,8 @@ export default function Entrainement() {
   return (
     <div className="stack loose">
       <header className="tr-hero">
-        <span className="tr-hero-icon" aria-hidden="true">
-          🎯
+        <span className="tr-hero-icon">
+          <Target />
         </span>
         <h2>S'entraîner</h2>
         <p className="subtitle">
@@ -177,46 +184,29 @@ export default function Entrainement() {
       {/* Niveau */}
       <section className="tr-block">
         <h3 className="tr-label">Niveau</h3>
-        <div className="scroll-x">
-          <button
-            className={`chip ${level === "all" ? "active" : ""}`}
-            onClick={() => setLevel("all")}
-          >
-            Tous
-          </button>
-          {levels.map((l) => (
-            <button
-              key={l}
-              className={`chip ${level === l ? "active" : ""}`}
-              onClick={() => setLevel(l)}
-            >
-              Niveau {l}
-            </button>
-          ))}
-        </div>
+        <ChipList
+          options={[
+            { value: "all", label: "Tous" },
+            ...levels.map((l) => ({ value: l, label: `Niveau ${l}` })),
+          ]}
+          value={level}
+          onChange={setLevel}
+        />
       </section>
 
       {/* Thème */}
       {themes.length > 1 && !chapterLabel && (
         <section className="tr-block">
           <h3 className="tr-label">Thème</h3>
-          <div className="scroll-x">
-            <button
-              className={`chip accent ${theme === "all" ? "active" : ""}`}
-              onClick={() => setTheme("all")}
-            >
-              Tous
-            </button>
-            {themes.map((t) => (
-              <button
-                key={t}
-                className={`chip accent ${theme === t ? "active" : ""}`}
-                onClick={() => setTheme(t)}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          <ChipList
+            options={[
+              { value: "all", label: "Tous" },
+              ...themes.map((t) => ({ value: t, label: t })),
+            ]}
+            value={theme}
+            onChange={setTheme}
+            variant="accent"
+          />
         </section>
       )}
 
@@ -229,23 +219,26 @@ export default function Entrainement() {
           </span>
         </h3>
         <div className="tr-kinds">
-          {SELECTABLE_KINDS.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              className={`tr-kind ${kinds.has(kind) ? "active" : ""}`}
-              onClick={() => toggleKind(kind)}
-              aria-pressed={kinds.has(kind)}
-            >
-              <span aria-hidden="true">{KIND_ICONS[kind]}</span>
-              <span>{KIND_LABELS[kind]}</span>
-              {KINDS_NEEDING_IME.has(kind) && (
-                <span className="tr-kind-ime" title="Clavier coréen requis">
-                  한
-                </span>
-              )}
-            </button>
-          ))}
+          {SELECTABLE_KINDS.map((kind) => {
+            const KindIcon = KIND_ICONS[kind] || DEFAULT_KIND_ICON;
+            return (
+              <button
+                key={kind}
+                type="button"
+                className={`tr-kind ${kinds.has(kind) ? "active" : ""}`}
+                onClick={() => toggleKind(kind)}
+                aria-pressed={kinds.has(kind)}
+              >
+                <KindIcon />
+                <span>{KIND_LABELS[kind]}</span>
+                {KINDS_NEEDING_IME.has(kind) && (
+                  <span className="tr-kind-ime" title="Clavier coréen requis">
+                    한
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </section>
 

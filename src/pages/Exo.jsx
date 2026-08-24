@@ -1,10 +1,16 @@
 import { useMemo, useState } from "react";
 import ExerciseRunner from "../components/ExerciseRunner";
+import ChipList from "../components/ChipList";
+import { Pencil, Bulb } from "../components/Icon";
 import { useTable } from "../hooks/useTable";
 import { deriveLevels } from "../lib/levels";
 import { fromDbRows } from "../lib/exercises/fromDb";
 import { makeRng } from "../lib/exercises/rng";
-import { KIND_ICONS, KIND_LABELS } from "../lib/constants";
+import {
+  DEFAULT_KIND_ICON,
+  KIND_ICONS,
+  KIND_LABELS,
+} from "../lib/constants";
 import "./Exo.css";
 
 export default function Exo() {
@@ -50,8 +56,8 @@ export default function Exo() {
   return (
     <div className="stack loose">
       <header className="exo-hero">
-        <span className="exo-hero-icon" aria-hidden="true">
-          ✏️
+        <span className="exo-hero-icon">
+          <Pencil />
         </span>
         <h2>Exercices</h2>
         <p className="subtitle">
@@ -60,34 +66,23 @@ export default function Exo() {
       </header>
 
       {levels.length > 1 && (
-        <div className="scroll-x">
-          {levels.map((l) => (
-            <button
-              key={l}
-              className={`chip ${activeLevel === l ? "active" : ""}`}
-              onClick={() => {
-                setLevel(l);
-                setTag("Tous");
-              }}
-            >
-              Niveau {l}
-            </button>
-          ))}
-        </div>
+        <ChipList
+          options={levels.map((l) => ({ value: l, label: `Niveau ${l}` }))}
+          value={activeLevel}
+          onChange={(l) => {
+            setLevel(l);
+            setTag("Tous");
+          }}
+        />
       )}
 
       {tags.length > 1 && (
-        <div className="scroll-x">
-          {tags.map((t) => (
-            <button
-              key={t}
-              className={`chip accent ${tag === t ? "active" : ""}`}
-              onClick={() => setTag(t)}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        <ChipList
+          options={tags.map((t) => ({ value: t, label: t }))}
+          value={tag}
+          onChange={setTag}
+          variant="accent"
+        />
       )}
 
       {visible.length === 0 ? (
@@ -102,22 +97,29 @@ export default function Exo() {
           </button>
 
           <div className="exo-list">
-            {visible.map((exo) => (
-              <button
-                key={exo.id}
-                className="exo-item"
-                onClick={() => setSession([exo])}
-              >
-                <span className="exo-item-top">
-                  <span className="exo-item-type">
-                    {KIND_ICONS[exo.kind]} {KIND_LABELS[exo.kind]}
+            {visible.map((exo) => {
+              const KindIcon = KIND_ICONS[exo.kind] || DEFAULT_KIND_ICON;
+              return (
+                <button
+                  key={exo.id}
+                  className="exo-item"
+                  onClick={() => setSession([exo])}
+                >
+                  <span className="exo-item-top">
+                    <span className="exo-item-type">
+                      <KindIcon /> {KIND_LABELS[exo.kind]}
+                    </span>
+                    {exo.tag && <span className="tag">{exo.tag}</span>}
                   </span>
-                  {exo.tag && <span className="tag">{exo.tag}</span>}
-                </span>
-                <span className="exo-item-title">{exo.prompt}</span>
-                {exo.hint && <span className="exo-item-hint">💡 {exo.hint}</span>}
-              </button>
-            ))}
+                  <span className="exo-item-title">{exo.prompt}</span>
+                  {exo.hint && (
+                    <span className="exo-item-hint">
+                      <Bulb /> {exo.hint}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </>
       )}

@@ -1,3 +1,14 @@
+import {
+  Keyboard,
+  Search,
+  Link as LinkIcon,
+  Eye,
+  Puzzle,
+  Pencil,
+  Shuffle,
+  ListChecks,
+} from "../components/Icon";
+
 /** Couleurs des catégories grammaticales coréennes (parties du discours). */
 export const TYPE_COLORS = {
   명사: { bg: "#EEEDFE", color: "#3C3489" },
@@ -31,17 +42,20 @@ export const KIND_LABELS = {
   "db-qcm": "QCM",
 };
 
+/** Composant icône par type d'exercice (utiliser <KIND_ICONS[kind] />). */
 export const KIND_ICONS = {
-  "fr-to-ko": "⌨️",
-  "ko-to-fr": "🔍",
-  matching: "🔗",
-  "odd-one-out": "🎯",
-  "grammar-qcm": "🧩",
-  "blank-from-example": "✏️",
-  "sentence-order": "🔀",
-  "db-blanks": "📝",
-  "db-qcm": "🔘",
+  "fr-to-ko": Keyboard,
+  "ko-to-fr": Search,
+  matching: LinkIcon,
+  "odd-one-out": Eye,
+  "grammar-qcm": Puzzle,
+  "blank-from-example": Pencil,
+  "sentence-order": Shuffle,
+  "db-blanks": Pencil,
+  "db-qcm": ListChecks,
 };
+
+export const DEFAULT_KIND_ICON = Pencil;
 
 /** Types nécessitant un clavier coréen (IME). */
 export const KINDS_NEEDING_IME = new Set([

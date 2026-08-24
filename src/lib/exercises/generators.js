@@ -173,23 +173,40 @@ const oddOneOut = {
     if (!intruder) return null;
 
     const family = [w, ...rng.sample(sameTheme, 2)];
-    const options = rng.shuffle([...family, intruder]);
+    // Uniquement le hangeul à l'écran : on écarte toute collision d'orthographe
+    // entre les 4 options avant de les retenir.
+    const options = rng.shuffle(
+      dedupeByHangul([...family, intruder]),
+    );
+    if (options.length < 4) return null;
 
     return {
       id: uid("odd-one-out", intruder.id, w.id),
       kind: "odd-one-out",
       level: String(w.level),
       prompt: "Quel mot n'appartient pas au même thème ?",
-      choices: options.map((x) => `${x.hangul} — ${primaryAnswer(x.fr)}`),
+      choices: options.map((x) => x.hangul),
       choicesLang: "ko",
-      expected: `${intruder.hangul} — ${primaryAnswer(intruder.fr)}`,
-      lang: "fr",
-      explanation: `${intruder.hangul} relève du thème « ${intruder.theme} », les autres du thème « ${w.theme} ».`,
+      expected: intruder.hangul,
+      lang: "ko",
+      explanation: `${intruder.hangul} (${primaryAnswer(intruder.fr)}) relève du thème « ${intruder.theme} », les autres du thème « ${w.theme} ».`,
       tag: w.theme,
       sourceKey: `vocab:${intruder.id}`,
     };
   },
 };
+
+function dedupeByHangul(words) {
+  const seen = new Set();
+  const out = [];
+  for (const w of words) {
+    const key = normalizeKey(w.hangul);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(w);
+  }
+  return out;
+}
 
 /* ───────────────── helpers leçons (grammaire / verbes) ───────────────── */
 
@@ -282,7 +299,10 @@ const grammarQcm = {
       explanation: lesson.formula
         ? `Formule : ${lesson.formula}`
         : undefined,
-      grammarPoint: answer,
+      // Pas de `grammarPoint` ici : pour ce type, il vaudrait la réponse
+      // elle-même et se révélerait avant la validation (voir ExerciseCard,
+      // qui affiche la forme correcte au-dessus de la question une fois
+      // l'exercice corrigé).
       tag: lesson.section || undefined,
       sourceKey: `${lesson.__table}:${lesson.id}`,
     };

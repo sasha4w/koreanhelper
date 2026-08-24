@@ -11,9 +11,10 @@
 .search-icon {
   position: absolute;
   left: var(--sp-3);
+  display: flex;
   color: var(--text-faint);
   pointer-events: none;
-  font-size: var(--fs-sm);
+  font-size: 1.05rem;
 }
 
 .search-bar input {

@@ -1,16 +1,19 @@
 import { useSearchParams } from "react-router-dom";
 import LessonList from "../components/LessonList";
+import { Puzzle, Book } from "../components/Icon";
 
 const TABS = [
   {
     value: "grammaire",
-    label: "🧩 Grammaire",
+    label: "Grammaire",
+    Icon: Puzzle,
     table: "grammaire",
     placeholder: "Chercher une particule, une règle…",
   },
   {
     value: "verbes",
-    label: "🔤 Terminaisons",
+    label: "Terminaisons",
+    Icon: Book,
     table: "verbes",
     placeholder: "Chercher une terminaison, un temps…",
   },
@@ -33,7 +36,7 @@ export default function Cours() {
               className={type === tab.value ? "active" : ""}
               onClick={() => setParams({ type: tab.value }, { replace: true })}
             >
-              {tab.label}
+              <tab.Icon /> {tab.label}
             </button>
           ))}
         </div>
