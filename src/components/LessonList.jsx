@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import Section from "./Section";
 import Card from "./Card";
+import CardGrid from "./CardGrid";
+import DetailPanel from "./DetailPanel";
 import SearchBar from "./SearchBar";
 import ChipList from "./ChipList";
 import { useTable } from "../hooks/useTable";
@@ -8,13 +9,14 @@ import { levelOptions, matchesLevel } from "../lib/levels";
 import { normalizeFr } from "../lib/normalize";
 
 /**
- * Liste de cours repliables. `verbes` et `grammaire` partagent exactement
- * la même structure : une seule implémentation paramétrée par la table.
+ * Liste de cours. `verbes` et `grammaire` partagent exactement la même
+ * structure : une seule implémentation paramétrée par la table.
  */
 export default function LessonList({ table, placeholder }) {
   const { data, loading, error } = useTable(table);
   const [level, setLevel] = useState("all");
   const [search, setSearch] = useState("");
+  const [selectedKey, setSelectedKey] = useState(null);
 
   const options = useMemo(() => levelOptions(data), [data]);
 
@@ -59,6 +61,7 @@ export default function LessonList({ table, placeholder }) {
   }, [filtered]);
 
   const searching = Boolean(search.trim());
+  const selectedSection = sections.find(([title]) => title === selectedKey);
 
   if (loading) return <div className="loader">Chargement…</div>;
   if (error)
@@ -89,16 +92,25 @@ export default function LessonList({ table, placeholder }) {
             : "Aucun contenu pour ce niveau."}
         </p>
       ) : (
-        sections.map(([title, items]) => (
-          <Section
-            /* La `key` inclut l'état de recherche : entrer ou sortir du mode
-               recherche remonte les sections, qui s'ouvrent alors d'office. */
-            key={`${title}:${searching}`}
-            title={title}
-            count={items.length}
-            defaultOpen={searching}
-          >
-            {items.map((card) => (
+        <CardGrid
+          items={sections.map(([title, items]) => ({
+            key: title,
+            title,
+            countLabel: `${items.length} leçon${items.length > 1 ? "s" : ""}`,
+          }))}
+          onSelect={setSelectedKey}
+        />
+      )}
+
+      <DetailPanel
+        open={Boolean(selectedSection)}
+        title={selectedSection ? selectedSection[0] : ""}
+        subtitle={selectedSection ? `${selectedSection[1].length} leçons` : ""}
+        onClose={() => setSelectedKey(null)}
+      >
+        {selectedSection && (
+          <div className="grid">
+            {selectedSection[1].map((card) => (
               <Card
                 key={card.id}
                 title={card.title}
@@ -112,9 +124,9 @@ export default function LessonList({ table, placeholder }) {
                 noteType={card.note_type}
               />
             ))}
-          </Section>
-        ))
-      )}
+          </div>
+        )}
+      </DetailPanel>
     </div>
   );
 }

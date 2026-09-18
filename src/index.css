@@ -12,6 +12,11 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* `overflow-x` doit vivre ici (pas seulement sur body) : un élément
+     `position: fixed` translaté hors écran (ex. DetailPanel fermé) élargit
+     le scroll de <html> même quand body est correctement clippé, car le
+     positionnement fixed échappe au containing block de body. */
+  overflow-x: hidden;
 }
 
 /* ================================

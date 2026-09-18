@@ -1,21 +1,8 @@
 /* ================================
    VOCABULAIRE
-   (les filtres vivent dans styles/components.css)
+   (les filtres vivent dans styles/components.css,
+   la grille de thèmes dans components/CardGrid.css)
 ================================ */
-
-/* Corps d'accordéon : padding latéral propre au vocabulaire */
-.accordion-body.open .vocab-accordion-inner {
-  padding: var(--sp-3) var(--sp-3) var(--sp-4);
-}
-
-/* ================================
-   EN-TÊTE DE GROUPE
-================================ */
-.vocab-group-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 var(--sp-3) var(--sp-3);
-}
 
 .vocab-count {
   text-align: center;

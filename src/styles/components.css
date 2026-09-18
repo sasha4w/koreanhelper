@@ -428,6 +428,12 @@
   font-size: var(--fs-sm);
 }
 
+.lesson-count {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
 /* ================================
    ICÔNES
 ================================ */

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import VocabCard from "../components/VocabCard";
 import SearchBar from "../components/SearchBar";
 import ChipList from "../components/ChipList";
+import CardGrid from "../components/CardGrid";
+import DetailPanel from "../components/DetailPanel";
 import { Target } from "../components/Icon";
 import { useTable } from "../hooks/useTable";
 import { levelOptions, matchesLevel } from "../lib/levels";
@@ -10,47 +12,13 @@ import { TYPE_COLORS } from "../lib/constants";
 import { normalizeFr } from "../lib/normalize";
 import "./Vocabulaire.css";
 
-function VocabSection({ title, count, onPractice, defaultOpen, children }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen || false);
-  return (
-    <div className="accordion-section">
-      <button
-        type="button"
-        className={`accordion-header ${isOpen ? "open" : ""}`}
-        onClick={() => setIsOpen((v) => !v)}
-        aria-expanded={isOpen}
-      >
-        <span className="accordion-title">{title}</span>
-        <span className="accordion-right">
-          <span className="accordion-count">{count} mots</span>
-          <span className="accordion-chevron" aria-hidden="true">
-            {isOpen ? "▲" : "▼"}
-          </span>
-        </span>
-      </button>
-
-      <div className={`accordion-body ${isOpen ? "open" : ""}`}>
-        <div className="accordion-body-inner vocab-accordion-inner">
-          {children}
-          {onPractice && (
-            <div className="vocab-group-actions">
-              <button className="chip accent active" onClick={onPractice}>
-                <Target /> S'entraîner sur ce groupe
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Vocabulaire() {
   const { data: words, loading, error } = useTable("vocabulaire");
   const navigate = useNavigate();
   const [level, setLevel] = useState("all");
   const [groupBy, setGroupBy] = useState("theme");
   const [search, setSearch] = useState("");
+  const [selectedKey, setSelectedKey] = useState(null);
 
   const levels = useMemo(() => levelOptions(words), [words]);
 
@@ -79,8 +47,6 @@ export default function Vocabulaire() {
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, "fr"));
   }, [filtered, groupBy]);
 
-  const searching = Boolean(search.trim());
-
   const groupLabel = (key) => {
     if (groupBy === "theme") return key;
     const [chap, part] = key.split("-");
@@ -96,6 +62,8 @@ export default function Vocabulaire() {
     }
     navigate(`/entrainement?${params.toString()}`);
   };
+
+  const selectedGroup = groups.find(([key]) => key === selectedKey);
 
   if (loading) return <div className="loader">Chargement…</div>;
   if (error)
@@ -152,20 +120,34 @@ export default function Vocabulaire() {
       {groups.length === 0 ? (
         <p className="empty-state">Aucun mot trouvé.</p>
       ) : (
-        groups.map(([key, items]) => (
-          <VocabSection
-            /* En recherche, les sections se remontent ouvertes : sinon les
-               résultats restent cachés derrière des accordéons fermés. */
-            key={`${key}:${searching}`}
-            title={groupLabel(key)}
-            count={items.length}
-            defaultOpen={searching}
-            onPractice={() => practice(key, items)}
-          >
-            <VocabCard words={items} />
-          </VocabSection>
-        ))
+        <CardGrid
+          items={groups.map(([key, items]) => ({
+            key,
+            title: groupLabel(key),
+            countLabel: `${items.length} mot${items.length > 1 ? "s" : ""}`,
+          }))}
+          onSelect={setSelectedKey}
+        />
       )}
+
+      <DetailPanel
+        open={Boolean(selectedGroup)}
+        title={selectedGroup ? groupLabel(selectedGroup[0]) : ""}
+        subtitle={selectedGroup ? `${selectedGroup[1].length} mots` : ""}
+        onClose={() => setSelectedKey(null)}
+      >
+        {selectedGroup && (
+          <div className="stack">
+            <VocabCard words={selectedGroup[1]} />
+            <button
+              className="btn primary block"
+              onClick={() => practice(selectedGroup[0], selectedGroup[1])}
+            >
+              <Target /> S'entraîner sur ce groupe
+            </button>
+          </div>
+        )}
+      </DetailPanel>
     </div>
   );
 }
