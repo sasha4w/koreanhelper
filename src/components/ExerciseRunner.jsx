@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import ExerciseCard from "./exercises/ExerciseCard";
 import {
   checkAnswer,
@@ -8,18 +8,22 @@ import {
 } from "../lib/exercises/check";
 import { recordAnswer, recordSession } from "../lib/progress";
 import { DEFAULT_KIND_ICON, KIND_ICONS, KIND_LABELS } from "../lib/constants";
+import { burstConfetti, animateCounter } from "../lib/animations";
 import {
   Bulb,
   CheckCircle,
   ChevronRight,
   Pin,
   BookOpen,
+  Flame,
   RotateCcw,
   ThumbsUp,
   Trophy,
+  X,
   Zap,
 } from "./Icon";
 import "./ExerciseRunner.css";
+import "../styles/animations.css";
 
 function resultTier(pct) {
   if (pct === 100) return { Icon: Trophy, tone: "gold" };
@@ -43,14 +47,37 @@ export default function ExerciseRunner({
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState([]);
   const [finished, setFinished] = useState(false);
+  const [combo, setCombo] = useState(0);
+  const scoreRef = useRef(null);
+  const pct = exercises.length ? Math.round((score / exercises.length) * 100) : 0;
 
   const current = exercises[index];
   const total = exercises.length;
 
+  useEffect(() => {
+    if (finished && pct >= 70) {
+      burstConfetti();
+    }
+    if (finished && scoreRef.current) {
+      animateCounter(scoreRef.current, score, 600);
+    }
+  }, [finished, pct, score]);
+
   const handleResult = useCallback(
     (exo, ok, given) => {
-      if (ok) setScore((s) => s + 1);
-      else setMistakes((m) => [...m, { exo, given }]);
+      if (ok) {
+        setScore((s) => s + 1);
+        setCombo((c) => {
+          const next = c + 1;
+          // Petit bonus visuel aux paliers de combo : pas à chaque bonne
+          // réponse (ça deviendrait fatigant sur 15+ exercices).
+          if (next >= 3 && next % 5 === 0) burstConfetti(16);
+          return next;
+        });
+      } else {
+        setMistakes((m) => [...m, { exo, given }]);
+        setCombo(0);
+      }
 
       if (trackProgress) {
         const keys = exo.sourceKeys || [exo.sourceKey];
@@ -72,17 +99,16 @@ export default function ExerciseRunner({
 
   /* ── Écran de résultat ── */
   if (finished || !current) {
-    const pct = total ? Math.round((score / total) * 100) : 0;
     const { Icon: ResultIcon, tone } = resultTier(pct);
 
     return (
       <div className="stack loose">
         <div className="run-result">
-          <span className={`run-result-icon tone-${tone}`}>
+          <span className={`run-result-icon tone-${tone} result-pop`}>
             <ResultIcon />
           </span>
           <h2 className="run-result-score">
-            {score} <span>/ {total}</span>
+            <span ref={scoreRef}>0</span> <span>/ {total}</span>
           </h2>
           <p className="subtitle">{pct}% de réussite</p>
         </div>
@@ -150,6 +176,11 @@ export default function ExerciseRunner({
         <span className="run-score">
           <CheckCircle /> {score}
         </span>
+        {combo >= 2 && (
+          <span key={combo} className="run-combo">
+            <Flame /> {combo}
+          </span>
+        )}
       </div>
 
       {/* La `key` remonte le composant à chaque exercice : l'état de la
@@ -194,6 +225,11 @@ function ExerciseStep({ exo, isLast, onResult, onNext, onQuit }) {
   return (
     <>
       <div className={`run-card ${submitted ? (ok ? "correct" : "wrong") : ""}`}>
+        {submitted && (
+          <span className={`run-feedback-badge ${ok ? "correct" : "wrong"}`}>
+            {ok ? <CheckCircle /> : <X />}
+          </span>
+        )}
         <p className="run-prompt">{exo.prompt}</p>
         {exo.promptSub && <p className="run-prompt-sub">{exo.promptSub}</p>}
         {exo.grammarPoint && (

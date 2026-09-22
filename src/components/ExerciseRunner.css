@@ -29,8 +29,36 @@
   white-space: nowrap;
 }
 
+/* Compteur de combo — apparaît à partir de 2 bonnes réponses d'affilée,
+   remonté (key={combo}) pour rejouer le pop à chaque incrément. */
+.run-combo {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: #fff1e0;
+  color: #e8770a;
+  font-weight: 700;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  animation: combo-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes combo-pop {
+  from {
+    transform: scale(0.4) rotate(-8deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
 /* ── Carte principale ── */
 .run-card {
+  position: relative;
   background: var(--surface);
   border-radius: var(--r-lg);
   padding: var(--sp-4);
@@ -41,10 +69,61 @@
 
 .run-card.correct {
   border-color: var(--success);
+  animation: correct-pulse 0.5s ease-out;
 }
 
 .run-card.wrong {
   border-color: var(--danger);
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes correct-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(45, 158, 78, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 16px rgba(45, 158, 78, 0);
+  }
+  100% {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* Badge ✓/✗ qui pop au coin de la carte — feedback immédiat et net,
+   plus visible que la seule teinte de la bordure. */
+.run-feedback-badge {
+  position: absolute;
+  top: -14px;
+  right: var(--sp-3);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  box-shadow: var(--shadow-md);
+  animation: badge-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.run-feedback-badge.correct {
+  background: var(--success);
+  color: #fff;
+}
+
+.run-feedback-badge.wrong {
+  background: var(--danger);
+  color: #fff;
+}
+
+@keyframes badge-pop {
+  from {
+    transform: scale(0) rotate(-20deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
 }
 
 .run-prompt {
@@ -99,6 +178,7 @@
   font-size: var(--fs-sm);
   color: var(--text-muted);
   text-align: center;
+  animation: feedback-fade-in 0.35s ease-out both;
 }
 
 .run-answer strong {
@@ -116,6 +196,18 @@
   font-size: var(--fs-sm);
   color: var(--text);
   line-height: 1.6;
+  animation: feedback-fade-in 0.35s ease-out 0.05s both;
+}
+
+@keyframes feedback-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .run-explanation .icon {
@@ -230,4 +322,15 @@
   color: var(--success-strong);
   font-weight: 700;
   font-style: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .run-card.correct,
+  .run-card.wrong,
+  .run-feedback-badge,
+  .run-combo,
+  .run-answer,
+  .run-explanation {
+    animation: none;
+  }
 }
