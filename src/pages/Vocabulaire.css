@@ -33,3 +33,25 @@
 .vocab-legend-wrap[open] summary::before {
   content: "▾ ";
 }
+
+.mastery-legend-criteria {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  max-width: 320px;
+  margin: var(--sp-3) auto 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.mastery-legend-criteria li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mastery-legend-criteria strong {
+  color: var(--text);
+  flex-shrink: 0;
+}

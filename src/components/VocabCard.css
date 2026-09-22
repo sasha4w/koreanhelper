@@ -42,7 +42,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
-  border-left: 3px solid var(--violet-light);
+  border-left: 3px solid var(--border);
   box-shadow: var(--shadow-sm);
   transition:
     box-shadow var(--t-fast),
@@ -55,11 +55,19 @@
   transform: translateY(-1px);
 }
 
-.vocab-word-card:nth-child(3n + 2) {
-  border-left-color: var(--rose);
+/* Couleur de bordure = niveau de maîtrise du mot (voir lib/mastery.js) —
+   même palette que MasteryBar.css. */
+.vocab-word-card.mastery-new {
+  border-left-color: var(--text-faint);
 }
-.vocab-word-card:nth-child(3n + 3) {
-  border-left-color: var(--teal);
+.vocab-word-card.mastery-learning {
+  border-left-color: var(--danger);
+}
+.vocab-word-card.mastery-almost {
+  border-left-color: var(--amber);
+}
+.vocab-word-card.mastery-mastered {
+  border-left-color: var(--success);
 }
 
 .vocab-hangul {

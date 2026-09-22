@@ -1,15 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import VocabCard from "../components/VocabCard";
 import SearchBar from "../components/SearchBar";
 import ChipList from "../components/ChipList";
 import CardGrid from "../components/CardGrid";
 import DetailPanel from "../components/DetailPanel";
+import MasteryBar from "../components/MasteryBar";
 import { Target } from "../components/Icon";
 import { useTable } from "../hooks/useTable";
 import { levelOptions, matchesLevel } from "../lib/levels";
 import { TYPE_COLORS } from "../lib/constants";
 import { normalizeFr } from "../lib/normalize";
+import { getMasteryDistribution } from "../lib/mastery";
+import { subscribe } from "../lib/progress";
 import "./Vocabulaire.css";
 
 export default function Vocabulaire() {
@@ -19,6 +22,11 @@ export default function Vocabulaire() {
   const [groupBy, setGroupBy] = useState("theme");
   const [search, setSearch] = useState("");
   const [selectedKey, setSelectedKey] = useState(null);
+
+  // Force un recalcul de la répartition de maîtrise après chaque session
+  // (recordAnswer/recordSession notifient les abonnés de progress.js).
+  const [progressTick, setProgressTick] = useState(0);
+  useEffect(() => subscribe(() => setProgressTick((t) => t + 1)), []);
 
   const levels = useMemo(() => levelOptions(words), [words]);
 
@@ -33,6 +41,14 @@ export default function Vocabulaire() {
       );
     });
   }, [words, level, search]);
+
+  // `progressTick` ne sert qu'à déclencher un recalcul quand progress.js
+  // notifie un changement (fin de session) — il n'est pas lu dans le corps.
+  const masteryDistribution = useMemo(
+    () => getMasteryDistribution(filtered),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filtered, progressTick],
+  );
 
   const groups = useMemo(() => {
     const map = new Map();
@@ -80,6 +96,8 @@ export default function Vocabulaire() {
       {/* Filtres */}
       <ChipList options={levels} value={level} onChange={setLevel} />
 
+      <MasteryBar counts={masteryDistribution} />
+
       <div className="segmented-row">
         <div className="segmented">
           <button
@@ -101,9 +119,9 @@ export default function Vocabulaire() {
         {filtered.length} mot{filtered.length > 1 ? "s" : ""}
       </p>
 
-      {/* Légende des types */}
+      {/* Légende */}
       <details className="vocab-legend-wrap">
-        <summary>Légende des types</summary>
+        <summary>Légende</summary>
         <div className="legend">
           {Object.entries(TYPE_COLORS).map(([type, s]) => (
             <span
@@ -115,6 +133,25 @@ export default function Vocabulaire() {
             </span>
           ))}
         </div>
+
+        <ul className="mastery-legend-criteria">
+          <li>
+            <span className="mastery-bar-dot mastery-new" />
+            <strong>Nouveau</strong> — mot jamais rencontré
+          </li>
+          <li>
+            <span className="mastery-bar-dot mastery-learning" />
+            <strong>En cours</strong> — 0 à 1 bonne réponse d'affilée
+          </li>
+          <li>
+            <span className="mastery-bar-dot mastery-almost" />
+            <strong>Presque acquis</strong> — 2 à 3 bonnes réponses d'affilée
+          </li>
+          <li>
+            <span className="mastery-bar-dot mastery-mastered" />
+            <strong>Maîtrisé</strong> — 4 bonnes réponses d'affilée sans erreur
+          </li>
+        </ul>
       </details>
 
       {groups.length === 0 ? (
