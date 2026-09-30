@@ -215,6 +215,14 @@ export const Play = (p) => (
   </Svg>
 );
 
+export const Speaker = (p) => (
+  <Svg {...p}>
+    <path d="M4 9.5h3.2L11 6v12l-3.8-3.5H4z" />
+    <path d="M15 9a3.2 3.2 0 0 1 0 6" />
+    <path d="M17.3 6.7a6.8 6.8 0 0 1 0 10.6" />
+  </Svg>
+);
+
 export const Wave = (p) => (
   <Svg {...p}>
     <path d="M8 12.5V6a1.5 1.5 0 0 1 3 0v5" />

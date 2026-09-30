@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { BLANK_KINDS, CHOICE_KINDS } from "../../lib/exercises/check";
 import { useAutoWidth } from "../../hooks/useAutoWidth";
+import { isKorean } from "../../lib/normalize";
+import HangulKeyboard from "./HangulKeyboard";
 import "./ExerciseCard.css";
 
 /**
@@ -75,9 +77,18 @@ function InputBody({ exo, value, onChange, onSubmit, submitted }) {
         autoCapitalize="off"
         spellCheck={false}
         lang={exo.lang === "ko" ? "ko" : "fr"}
+        inputMode={exo.lang === "ko" ? "none" : undefined}
         aria-label="Ta réponse"
         style={{ width }}
       />
+
+      {exo.lang === "ko" && !submitted && (
+        <HangulKeyboard
+          value={text}
+          onChange={onChange}
+          onEnter={() => onSubmit()}
+        />
+      )}
     </>
   );
 }
@@ -134,9 +145,11 @@ function ChoiceBody({ exo, value, onChange, submitted }) {
 function BlanksBody({ exo, value, onChange, onSubmit, submitted, detail }) {
   const refs = useRef({});
   const blanks = exo.segments.filter((s) => s.type === "blank");
+  const [activeIndex, setActiveIndex] = useState(blanks[0]?.index);
 
   useEffect(() => {
     if (!submitted) refs.current[blanks[0]?.index]?.focus();
+    setActiveIndex(blanks[0]?.index);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exo.id, submitted]);
 
@@ -148,41 +161,63 @@ function BlanksBody({ exo, value, onChange, onSubmit, submitted, detail }) {
     else onSubmit();
   };
 
+  const activeBlank = blanks.find((b) => b.index === activeIndex);
+  const showKeyboard = activeBlank && isKorean(activeBlank.answer) && !submitted;
+
   return (
-    <p className="ex-text-block">
-      {exo.segments.map((seg, i) => {
-        if (seg.type === "text") {
+    <>
+      <p className="ex-text-block">
+        {exo.segments.map((seg, i) => {
+          if (seg.type === "text") {
+            return (
+              <span key={i} className="ex-text">
+                {seg.value}
+              </span>
+            );
+          }
+          const status = submitted
+            ? detail?.results?.[seg.index]
+              ? "correct"
+              : "wrong"
+            : "";
           return (
-            <span key={i} className="ex-text">
-              {seg.value}
-            </span>
+            <BlankToken
+              key={i}
+              seg={seg}
+              value={value?.[seg.index] || ""}
+              status={status}
+              submitted={submitted}
+              registerRef={(el) => {
+                refs.current[seg.index] = el;
+              }}
+              onChange={(v) => onChange({ ...value, [seg.index]: v })}
+              onKeyDown={(e) => handleKey(e, seg.index)}
+              onFocus={() => setActiveIndex(seg.index)}
+            />
           );
-        }
-        const status = submitted
-          ? detail?.results?.[seg.index]
-            ? "correct"
-            : "wrong"
-          : "";
-        return (
-          <BlankToken
-            key={i}
-            seg={seg}
-            value={value?.[seg.index] || ""}
-            status={status}
-            submitted={submitted}
-            registerRef={(el) => {
-              refs.current[seg.index] = el;
-            }}
-            onChange={(v) => onChange({ ...value, [seg.index]: v })}
-            onKeyDown={(e) => handleKey(e, seg.index)}
-          />
-        );
-      })}
-    </p>
+        })}
+      </p>
+
+      {showKeyboard && (
+        <HangulKeyboard
+          value={value?.[activeIndex] || ""}
+          onChange={(v) => onChange({ ...value, [activeIndex]: v })}
+        />
+      )}
+    </>
   );
 }
 
-function BlankToken({ seg, value, status, submitted, registerRef, onChange, onKeyDown }) {
+function BlankToken({
+  seg,
+  value,
+  status,
+  submitted,
+  registerRef,
+  onChange,
+  onKeyDown,
+  onFocus,
+}) {
   const { width, mirrorRef } = useAutoWidth(value || "···", {
     min: Math.max(seg.answer.length, 2) * 15 + 24,
   });
@@ -199,12 +234,14 @@ function BlankToken({ seg, value, status, submitted, registerRef, onChange, onKe
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
+        onFocus={onFocus}
         disabled={submitted}
         placeholder="···"
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
+        inputMode="none"
         style={{ width }}
         aria-label={`Trou ${seg.index + 1}`}
       />

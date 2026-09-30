@@ -1,0 +1,25 @@
+.speak-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--violet-soft);
+  color: var(--violet);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background var(--t-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.speak-btn:hover {
+  background: var(--violet-border-soft);
+}
+
+.speak-btn:focus-visible {
+  outline: 3px solid var(--violet-border);
+  outline-offset: 2px;
+}

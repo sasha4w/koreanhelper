@@ -1,6 +1,7 @@
 import { typeStyle } from "../lib/constants";
 import { getWordMasteryTier } from "../lib/mastery";
 import { getState } from "../lib/progress";
+import SpeakButton from "./SpeakButton";
 import "./VocabCard.css";
 
 export default function VocabCard({ words }) {
@@ -25,7 +26,10 @@ export default function VocabCard({ words }) {
               }[tier]
             }
           >
-            <span className="vocab-hangul">{word.hangul}</span>
+            <span className="vocab-hangul-row">
+              <span className="vocab-hangul">{word.hangul}</span>
+              <SpeakButton text={word.hangul} />
+            </span>
             <span className="vocab-fr">{word.fr}</span>
             {word.type && (
               <span
