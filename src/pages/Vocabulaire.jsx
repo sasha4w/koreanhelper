@@ -8,6 +8,7 @@ import DetailPanel from "../components/DetailPanel";
 import MasteryBar from "../components/MasteryBar";
 import { Target } from "../components/Icon";
 import { useTable } from "../hooks/useTable";
+import { useLang } from "../lib/i18n/LangProvider";
 import { levelOptions, matchesLevel } from "../lib/levels";
 import { TYPE_COLORS } from "../lib/constants";
 import { normalizeFr } from "../lib/normalize";
@@ -15,9 +16,49 @@ import { getMasteryDistribution } from "../lib/mastery";
 import { subscribe } from "../lib/progress";
 import "./Vocabulaire.css";
 
+const THEME_LABELS = {
+  fr: {
+    lieux: "Lieux",
+    adjectifs: "Adjectifs",
+    verbes: "Verbes",
+    nouns: "Noms",
+    particles: "Particules",
+    numbers: "Nombres",
+    days: "Jours",
+    time: "Temps",
+    actions: "Actions",
+    descriptive: "Mots descriptifs",
+    colors: "Couleurs",
+    food: "Nourriture",
+    family: "Famille",
+    body: "Parties du corps",
+    clothes: "Vêtements",
+    emotions: "Émotions",
+  },
+  en: {
+    lieux: "Places",
+    adjectifs: "Adjectives",
+    verbes: "Verbs",
+    nouns: "Nouns",
+    particles: "Particles",
+    numbers: "Numbers",
+    days: "Days",
+    time: "Time",
+    actions: "Actions",
+    descriptive: "Descriptive words",
+    colors: "Colors",
+    food: "Food",
+    family: "Family",
+    body: "Body parts",
+    clothes: "Clothes",
+    emotions: "Emotions",
+  },
+};
+
 export default function Vocabulaire() {
   const { data: words, loading, error } = useTable("vocabulaire");
   const navigate = useNavigate();
+  const { lang, t } = useLang();
   const [level, setLevel] = useState("all");
   const [groupBy, setGroupBy] = useState("theme");
   const [search, setSearch] = useState("");
@@ -35,12 +76,12 @@ export default function Vocabulaire() {
     return words.filter((w) => {
       if (!matchesLevel(w, level)) return false;
       if (!needle) return true;
-      return (
-        normalizeFr(w.fr || "").includes(needle) ||
-        String(w.hangul || "").includes(search.trim())
-      );
+      const fr_match = normalizeFr(w.fr || "").includes(needle);
+      const en_match = lang === "en" && w.en ? normalizeFr(w.en || "").includes(needle) : false;
+      const hangul_match = String(w.hangul || "").includes(search.trim());
+      return fr_match || en_match || hangul_match;
     });
-  }, [words, level, search]);
+  }, [words, level, search, lang]);
 
   // `progressTick` ne sert qu'à déclencher un recalcul quand progress.js
   // notifie un changement (fin de session) — il n'est pas lu dans le corps.
@@ -60,13 +101,21 @@ export default function Vocabulaire() {
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(w);
     }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, "fr"));
-  }, [filtered, groupBy]);
+    const locale = lang === "en" ? "en" : "fr";
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, locale));
+  }, [filtered, groupBy, lang]);
 
   const groupLabel = (key) => {
-    if (groupBy === "theme") return key;
+    if (groupBy === "theme") {
+      // Try to translate the theme name using the lookup table
+      const themeKey = key.toLowerCase().replace(/\s+/g, "");
+      const themeLangDict = THEME_LABELS[lang] || THEME_LABELS.fr;
+      return themeLangDict[themeKey] || key;
+    }
     const [chap, part] = key.split("-");
-    return `Chapitre ${parseInt(chap, 10)} · Partie ${part}`;
+    const chapLabel = lang === "en" ? "Chapter" : "Chapitre";
+    const partLabel = lang === "en" ? "Part" : "Partie";
+    return `${chapLabel} ${parseInt(chap, 10)} · ${partLabel} ${part}`;
   };
 
   const practice = (key, items) => {
@@ -90,7 +139,7 @@ export default function Vocabulaire() {
       <SearchBar
         value={search}
         onChange={setSearch}
-        placeholder="Chercher un mot (français ou 한글)"
+        placeholder={lang === "en" ? "Search a word (English or 한글)" : "Chercher un mot (français ou 한글)"}
       />
 
       {/* Filtres */}
@@ -104,24 +153,24 @@ export default function Vocabulaire() {
             className={groupBy === "theme" ? "active" : ""}
             onClick={() => setGroupBy("theme")}
           >
-            Par thème
+            {lang === "en" ? "By theme" : "Par thème"}
           </button>
           <button
             className={groupBy === "chapitre" ? "active" : ""}
             onClick={() => setGroupBy("chapitre")}
           >
-            Par chapitre
+            {lang === "en" ? "By chapter" : "Par chapitre"}
           </button>
         </div>
       </div>
 
       <p className="vocab-count">
-        {filtered.length} mot{filtered.length > 1 ? "s" : ""}
+        {filtered.length} {lang === "en" ? (filtered.length > 1 ? "words" : "word") : (filtered.length > 1 ? "mots" : "mot")}
       </p>
 
       {/* Légende */}
       <details className="vocab-legend-wrap">
-        <summary>Légende</summary>
+        <summary>{lang === "en" ? "Legend" : "Légende"}</summary>
         <div className="legend">
           {Object.entries(TYPE_COLORS).map(([type, s]) => (
             <span
@@ -137,31 +186,31 @@ export default function Vocabulaire() {
         <ul className="mastery-legend-criteria">
           <li>
             <span className="mastery-bar-dot mastery-new" />
-            <strong>Nouveau</strong> — mot jamais rencontré
+            <strong>{lang === "en" ? "New" : "Nouveau"}</strong> — {lang === "en" ? "word never encountered" : "mot jamais rencontré"}
           </li>
           <li>
             <span className="mastery-bar-dot mastery-learning" />
-            <strong>En cours</strong> — 0 à 1 bonne réponse d'affilée
+            <strong>{lang === "en" ? "Learning" : "En cours"}</strong> — {lang === "en" ? "0 to 1 correct answers in a row" : "0 à 1 bonne réponse d'affilée"}
           </li>
           <li>
             <span className="mastery-bar-dot mastery-almost" />
-            <strong>Presque acquis</strong> — 2 à 3 bonnes réponses d'affilée
+            <strong>{lang === "en" ? "Almost mastered" : "Presque acquis"}</strong> — {lang === "en" ? "2 to 3 correct answers in a row" : "2 à 3 bonnes réponses d'affilée"}
           </li>
           <li>
             <span className="mastery-bar-dot mastery-mastered" />
-            <strong>Maîtrisé</strong> — 4 bonnes réponses d'affilée sans erreur
+            <strong>{lang === "en" ? "Mastered" : "Maîtrisé"}</strong> — {lang === "en" ? "4 correct answers in a row without error" : "4 bonnes réponses d'affilée sans erreur"}
           </li>
         </ul>
       </details>
 
       {groups.length === 0 ? (
-        <p className="empty-state">Aucun mot trouvé.</p>
+        <p className="empty-state">{lang === "en" ? "No words found." : "Aucun mot trouvé."}</p>
       ) : (
         <CardGrid
           items={groups.map(([key, items]) => ({
             key,
             title: groupLabel(key),
-            countLabel: `${items.length} mot${items.length > 1 ? "s" : ""}`,
+            countLabel: `${items.length} ${lang === "en" ? (items.length > 1 ? "words" : "word") : (items.length > 1 ? "mots" : "mot")}`,
           }))}
           onSelect={setSelectedKey}
         />
@@ -170,7 +219,7 @@ export default function Vocabulaire() {
       <DetailPanel
         open={Boolean(selectedGroup)}
         title={selectedGroup ? groupLabel(selectedGroup[0]) : ""}
-        subtitle={selectedGroup ? `${selectedGroup[1].length} mots` : ""}
+        subtitle={selectedGroup ? `${selectedGroup[1].length} ${lang === "en" ? (selectedGroup[1].length > 1 ? "words" : "word") : (selectedGroup[1].length > 1 ? "mots" : "mot")}` : ""}
         onClose={() => setSelectedKey(null)}
       >
         {selectedGroup && (
@@ -180,7 +229,7 @@ export default function Vocabulaire() {
               className="btn primary block"
               onClick={() => practice(selectedGroup[0], selectedGroup[1])}
             >
-              <Target /> S'entraîner sur ce groupe
+              <Target /> {lang === "en" ? "Practice this group" : "S'entraîner sur ce groupe"}
             </button>
           </div>
         )}

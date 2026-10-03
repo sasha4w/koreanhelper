@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import ExerciseRunner from "../components/ExerciseRunner";
 import { useTables } from "../hooks/useTable";
+import { useLang } from "../lib/i18n/LangProvider";
 import { getDueEntries, getStats, subscribe } from "../lib/progress";
 import { buildSession } from "../lib/exercises/buildSession";
 import {
@@ -27,6 +28,7 @@ const DUE_VISIBLE = 40;
 
 export default function Home() {
   const { data, loading } = useTables(TABLES);
+  const { lang } = useLang();
   const [stats, setStats] = useState(getStats);
   const [session, setSession] = useState(null);
   const [showDue, setShowDue] = useState(false);
@@ -48,7 +50,11 @@ export default function Home() {
   const lookup = useMemo(() => {
     const map = new Map();
     for (const w of data.vocabulaire || [])
-      map.set(`vocab:${w.id}`, { label: w.hangul, sub: w.fr, ko: true });
+      map.set(`vocab:${w.id}`, {
+        label: w.hangul,
+        sub: lang === "en" && w.en ? w.en : w.fr,
+        ko: true
+      });
     for (const l of data.grammaire || [])
       map.set(`grammaire:${l.id}`, {
         label: l.title,
@@ -64,7 +70,7 @@ export default function Home() {
     for (const e of data.exercices || [])
       map.set(`exercice:${e.id}`, { label: e.title, sub: e.tag });
     return map;
-  }, [data]);
+  }, [data, lang]);
 
   // `stats` ne sert qu'à déclencher un recalcul : getDueEntries() relit
   // localStorage directement et ne référence pas `stats` lui-même.
@@ -88,24 +94,32 @@ export default function Home() {
     <div className="stack loose">
       <header className="home-hero">
         <h2>
-          Bonjour <Wave />
+          {lang === "en" ? "Hello" : "Bonjour"} <Wave />
         </h2>
-        <p className="subtitle">Prêt·e pour ta révision du jour ?</p>
+        <p className="subtitle">{lang === "en" ? "Ready for today's review?" : "Prêt·e pour ta révision du jour ?"}</p>
       </header>
 
       <div className="home-stats">
-        <Stat value={stats.streak.current} label="jours d'affilée" Icon={Flame} />
+        <Stat
+          value={stats.streak.current}
+          label={lang === "en" ? "days in a row" : "jours d'affilée"}
+          Icon={Flame}
+        />
         <Stat
           value={stats.due}
-          label="à réviser"
+          label={lang === "en" ? "to review" : "à réviser"}
           Icon={Clock}
           onClick={() => setShowDue((v) => !v)}
           active={showDue}
         />
-        <Stat value={stats.mastered} label="maîtrisés" Icon={Star} />
+        <Stat
+          value={stats.mastered}
+          label={lang === "en" ? "mastered" : "maîtrisés"}
+          Icon={Star}
+        />
         <Stat
           value={stats.seen ? `${stats.accuracy}%` : "—"}
-          label="de réussite"
+          label={lang === "en" ? "success rate" : "de réussite"}
           Icon={Target}
         />
       </div>
@@ -114,20 +128,20 @@ export default function Home() {
         <div className="home-due-panel">
           <div className="home-due-head">
             <h3>
-              <Clock /> Mots à réviser
+              <Clock /> {lang === "en" ? "Words to review" : "Mots à réviser"}
             </h3>
             <button
               type="button"
               className="home-due-close"
               onClick={() => setShowDue(false)}
-              aria-label="Fermer"
+              aria-label={lang === "en" ? "Close" : "Fermer"}
             >
               <X />
             </button>
           </div>
 
           {dueEntries.length === 0 ? (
-            <p className="empty-state">Rien à réviser pour l'instant, bravo !</p>
+            <p className="empty-state">{lang === "en" ? "Nothing to review right now, great!" : "Rien à réviser pour l'instant, bravo !"}</p>
           ) : (
             <>
               <ul className="home-due-list">
@@ -148,11 +162,11 @@ export default function Home() {
               </ul>
               {dueEntries.length > DUE_VISIBLE && (
                 <p className="home-due-more">
-                  +{dueEntries.length - DUE_VISIBLE} autres
+                  +{dueEntries.length - DUE_VISIBLE} {lang === "en" ? "others" : "autres"}
                 </p>
               )}
               <Link to="/entrainement" className="btn secondary block">
-                Réviser maintenant
+                {lang === "en" ? "Review now" : "Réviser maintenant"}
               </Link>
             </>
           )}
@@ -165,51 +179,51 @@ export default function Home() {
         disabled={loading || daily.length === 0}
       >
         {loading ? (
-          "Chargement…"
+          lang === "en" ? "Loading…" : "Chargement…"
         ) : daily.length === 0 ? (
-          "Aucun exercice disponible"
+          lang === "en" ? "No exercises available" : "Aucun exercice disponible"
         ) : (
           <>
-            <Play /> Session du jour ({daily.length} exercices)
+            <Play /> {lang === "en" ? "Today's session" : "Session du jour"} ({daily.length} {lang === "en" ? "exercises" : "exercices"})
           </>
         )}
       </button>
 
       {stats.today && (
         <p className="home-today">
-          Aujourd'hui : {stats.today.score}/{stats.today.count}
+          {lang === "en" ? "Today" : "Aujourd'hui"} : {stats.today.score}/{stats.today.count}
           {stats.today.count >= DAILY_COUNT ? (
             <span className="home-today-done">
-              <Trophy /> objectif atteint
+              <Trophy /> {lang === "en" ? "goal reached" : "objectif atteint"}
             </span>
           ) : (
-            " — continue !"
+            lang === "en" ? " — keep going!" : " — continue !"
           )}
         </p>
       )}
 
       <nav className="home-links">
-        <HomeLink to="/entrainement" Icon={Target} title="S'entraîner">
-          Choisir un thème, un niveau et un type d'exercice
+        <HomeLink to="/entrainement" Icon={Target} title={lang === "en" ? "Train" : "S'entraîner"}>
+          {lang === "en" ? "Choose a theme, level and exercise type" : "Choisir un thème, un niveau et un type d'exercice"}
         </HomeLink>
-        <HomeLink to="/vocabulaire" Icon={Book} title="Vocabulaire">
-          {wordCount ? `${wordCount} mots à parcourir` : "Parcourir les mots"}
+        <HomeLink to="/vocabulaire" Icon={Book} title={lang === "en" ? "Vocabulary" : "Vocabulaire"}>
+          {wordCount ? `${wordCount} ${lang === "en" ? "words to learn" : "mots à parcourir"}` : lang === "en" ? "Browse words" : "Parcourir les mots"}
         </HomeLink>
-        <HomeLink to="/cours?type=grammaire" Icon={Puzzle} title="Grammaire">
-          Particules, structures et règles
+        <HomeLink to="/cours?type=grammaire" Icon={Puzzle} title={lang === "en" ? "Grammar" : "Grammaire"}>
+          {lang === "en" ? "Particles, structures and rules" : "Particules, structures et règles"}
         </HomeLink>
         <HomeLink
           to="/cours?type=verbes"
           Icon={Book}
-          title="Terminaisons verbales"
+          title={lang === "en" ? "Verb endings" : "Terminaisons verbales"}
         >
-          Conjugaisons, politesse et temps
+          {lang === "en" ? "Conjugations, politeness and tenses" : "Conjugaisons, politesse et temps"}
         </HomeLink>
-        <HomeLink to="/quiz" Icon={Brain} title="Quiz par chapitre">
-          Réviser un chapitre précis
+        <HomeLink to="/quiz" Icon={Brain} title={lang === "en" ? "Quiz by chapter" : "Quiz par chapitre"}>
+          {lang === "en" ? "Review a specific chapter" : "Réviser un chapitre précis"}
         </HomeLink>
-        <HomeLink to="/exo" Icon={Pencil} title="Exercices rédigés">
-          Les exercices écrits à la main
+        <HomeLink to="/exo" Icon={Pencil} title={lang === "en" ? "Written exercises" : "Exercices rédigés"}>
+          {lang === "en" ? "Handwritten exercises" : "Les exercices écrits à la main"}
         </HomeLink>
       </nav>
     </div>
