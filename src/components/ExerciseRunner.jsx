@@ -5,6 +5,7 @@ import {
   displayAnswer,
   emptyAnswer,
   isAnswerReady,
+  progressUpdates,
 } from "../lib/exercises/check";
 import { recordAnswer, recordSession } from "../lib/progress";
 import { DEFAULT_KIND_ICON, KIND_ICONS, KIND_LABELS } from "../lib/constants";
@@ -64,7 +65,7 @@ export default function ExerciseRunner({
   }, [finished, pct, score]);
 
   const handleResult = useCallback(
-    (exo, ok, given) => {
+    (exo, ok, given, detail) => {
       if (ok) {
         setScore((s) => s + 1);
         setCombo((c) => {
@@ -80,8 +81,9 @@ export default function ExerciseRunner({
       }
 
       if (trackProgress) {
-        const keys = exo.sourceKeys || [exo.sourceKey];
-        keys.filter(Boolean).forEach((key) => recordAnswer(key, ok));
+        for (const u of progressUpdates(exo, ok, detail)) {
+          recordAnswer(u.key, u.ok, { easy: u.easy });
+        }
       }
     },
     [trackProgress],
@@ -214,7 +216,7 @@ function ExerciseStep({ exo, isLast, onResult, onNext, onQuit }) {
     setSubmitted(true);
     setDetail(result.detail);
     setOk(result.ok);
-    onResult(exo, result.ok, value);
+    onResult(exo, result.ok, value, result.detail);
   };
 
   const ready = isAnswerReady(exo, value);

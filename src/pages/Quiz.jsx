@@ -4,7 +4,12 @@ import ChipList from "../components/ChipList";
 import { Brain } from "../components/Icon";
 import { useTable } from "../hooks/useTable";
 import { deriveLevels } from "../lib/levels";
-import { availableChapters } from "../lib/exercises/buildSession";
+import {
+  availableChapters,
+  MASTERED_SHARE,
+  orderByNeed,
+} from "../lib/exercises/buildSession";
+import { isMasteredNotDue } from "../lib/progress";
 import { makeRng } from "../lib/exercises/rng";
 import { GENERATORS_BY_KIND } from "../lib/exercises/generators";
 import "./Quiz.css";
@@ -37,8 +42,19 @@ export default function Quiz() {
         w.partie === partie,
     );
     const generator = GENERATORS_BY_KIND[direction];
-    const exercises = rng
-      .shuffle(pool)
+    const keyOf = (w) => `vocab:${w.id}`;
+
+    // Mots fragiles d'abord ; les mots maîtrisés pas encore dus ne gardent
+    // qu'une petite part de rappel, sauf si la partie n'a rien d'autre.
+    const ordered = orderByNeed(pool, keyOf, rng);
+    const cap = Math.max(1, Math.floor(pool.length * MASTERED_SHARE));
+    let kept = 0;
+    const selected = ordered.filter((w) => {
+      if (!isMasteredNotDue(keyOf(w))) return true;
+      return kept++ < cap;
+    });
+
+    const exercises = selected
       .map((w) => generator.generate(w, pool, rng))
       .filter(Boolean);
 

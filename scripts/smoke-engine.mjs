@@ -4,7 +4,17 @@
  */
 import { buildSession, ALL_KINDS } from "../src/lib/exercises/buildSession.js";
 import { isCorrect } from "../src/lib/normalize.js";
-import { checkAnswer, emptyAnswer } from "../src/lib/exercises/check.js";
+import {
+  checkAnswer,
+  emptyAnswer,
+  progressUpdates,
+} from "../src/lib/exercises/check.js";
+import {
+  nextBox,
+  recordAnswer,
+  reset,
+  selectionWeight,
+} from "../src/lib/progress.js";
 import { fromDbRows } from "../src/lib/exercises/fromDb.js";
 
 const themes = ["Nourriture", "Famille", "Voyage", "École"];
@@ -294,6 +304,79 @@ check(
   "même graine = même session",
   JSON.stringify(a.map((e) => e.id)) === JSON.stringify(b.map((e) => e.id)),
 );
+
+/* ── 8. Progression : boîtes ── */
+check("juste : +1", nextBox(1, true) === 2);
+check("juste : plafond 5", nextBox(5, true) === 5);
+check("faux : −1 depuis boîte 3", nextBox(3, false) === 2);
+check("faux : −2 depuis boîte 5", nextBox(5, false) === 3);
+check("faux : −2 depuis boîte 4", nextBox(4, false) === 2);
+check("faux : plancher 1", nextBox(1, false) === 1);
+check("facile : monte jusqu'à 3", nextBox(2, true, { easy: true }) === 3);
+check("facile : bloqué à 3", nextBox(3, true, { easy: true }) === 3);
+check("facile : ne fait pas redescendre", nextBox(5, true, { easy: true }) === 5);
+
+/* ── 9. Appariement noté paire par paire ── */
+const matchExo = {
+  kind: "matching",
+  pairs: [
+    { id: 1, ko: "가", fr: "a" },
+    { id: 2, ko: "나", fr: "b" },
+  ],
+};
+const matchCheck = checkAnswer(matchExo, { 1: "a", 2: "a" });
+const updates = progressUpdates(matchExo, matchCheck.ok, matchCheck.detail);
+check(
+  "appariement : seule la paire ratée est fausse",
+  updates.length === 2 && updates[0].ok === true && updates[1].ok === false,
+);
+check("appariement : compté comme facile", updates.every((u) => u.easy));
+check(
+  "saisie : pas facile",
+  progressUpdates({ kind: "fr-to-ko", sourceKey: "vocab:1" }, true)[0].easy === false,
+);
+
+/* ── 10. Tirage pondéré : les mots maîtrisés se font rares ── */
+reset();
+const masteredIds = vocab.slice(0, 24).map((w) => w.id);
+for (const wid of masteredIds) {
+  for (let i = 0; i < 5; i++) recordAnswer(`vocab:${wid}`, true);
+}
+check(
+  "mot maîtrisé : poids faible",
+  selectionWeight(`vocab:${masteredIds[0]}`) < 0.1 &&
+    selectionWeight(`vocab:${vocab[30].id}`) === 1,
+);
+let masteredSeen = 0;
+let total = 0;
+for (let s = 0; s < 30; s++) {
+  const sess = buildSession({
+    vocab,
+    kinds: ["fr-to-ko"],
+    count: 10,
+    seed: 1000 + s,
+  });
+  total += sess.length;
+  masteredSeen += sess.filter((e) =>
+    masteredIds.includes(Number(e.sourceKey.split(":")[1])),
+  ).length;
+}
+check(
+  "session : ≤ 10 % de mots maîtrisés (moitié du pool)",
+  masteredSeen / total <= 0.1,
+  `${masteredSeen}/${total}`,
+);
+const onlyMastered = buildSession({
+  vocab: vocab.slice(0, 24),
+  kinds: ["fr-to-ko"],
+  count: 10,
+  seed: 5,
+});
+check(
+  "pool 100 % maîtrisé : session quand même remplie",
+  onlyMastered.length === 10,
+);
+reset();
 
 console.log(
   failures === 0

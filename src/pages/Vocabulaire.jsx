@@ -190,17 +190,22 @@ export default function Vocabulaire() {
           </li>
           <li>
             <span className="mastery-bar-dot mastery-learning" />
-            <strong>{lang === "en" ? "Learning" : "En cours"}</strong> — {lang === "en" ? "0 to 1 correct answers in a row" : "0 à 1 bonne réponse d'affilée"}
+            <strong>{lang === "en" ? "Learning" : "En cours"}</strong> — {lang === "en" ? "levels 1–2, seen often" : "niveaux 1–2, revient souvent"}
           </li>
           <li>
             <span className="mastery-bar-dot mastery-almost" />
-            <strong>{lang === "en" ? "Almost mastered" : "Presque acquis"}</strong> — {lang === "en" ? "2 to 3 correct answers in a row" : "2 à 3 bonnes réponses d'affilée"}
+            <strong>{lang === "en" ? "Almost mastered" : "Presque acquis"}</strong> — {lang === "en" ? "levels 3–4, reviewed less often" : "niveaux 3–4, revu de plus en plus rarement"}
           </li>
           <li>
             <span className="mastery-bar-dot mastery-mastered" />
-            <strong>{lang === "en" ? "Mastered" : "Maîtrisé"}</strong> — {lang === "en" ? "4 correct answers in a row without error" : "4 bonnes réponses d'affilée sans erreur"}
+            <strong>{lang === "en" ? "Mastered" : "Maîtrisé"}</strong> — {lang === "en" ? "level 5, comes back only for occasional recall" : "niveau 5, ne revient que pour un rappel ponctuel"}
           </li>
         </ul>
+        <p className="mastery-legend-note">
+          {lang === "en"
+            ? "A correct answer raises the word one level, a mistake lowers it (two levels from level 4). Multiple-choice and matching exercises can raise a word up to level 3 only: beyond that, you need to type it."
+            : "Une bonne réponse fait monter le mot d'un niveau, une erreur le fait descendre (de deux depuis le niveau 4). Les QCM et associations font monter jusqu'au niveau 3 seulement : au-delà, il faut l'écrire."}
+        </p>
       </details>
 
       {groups.length === 0 ? (

@@ -11,6 +11,40 @@ export const CHOICE_KINDS = new Set([
 /** Types dont la réponse est saisie dans des trous. */
 export const BLANK_KINDS = new Set(["blank-from-example", "db-blanks"]);
 
+/**
+ * Exercices de reconnaissance : la réponse est sous les yeux. Ils font
+ * progresser un mot, mais pas au-delà de EASY_MAX_BOX (voir progress.js).
+ */
+export const EASY_KINDS = new Set([
+  ...CHOICE_KINDS,
+  "matching",
+  "sentence-order",
+]);
+
+/**
+ * Mises à jour de progression à appliquer après correction.
+ * L'appariement est noté paire par paire : une seule paire ratée ne doit pas
+ * faire redescendre les 4 autres mots.
+ *
+ * @returns {{ key: string, ok: boolean, easy: boolean }[]}
+ */
+export function progressUpdates(exo, ok, detail = {}) {
+  if (!exo) return [];
+  const easy = EASY_KINDS.has(exo.kind);
+
+  if (exo.kind === "matching" && exo.pairs?.length) {
+    const results = detail.results || {};
+    return exo.pairs.map((pair) => ({
+      key: `vocab:${pair.id}`,
+      ok: Boolean(results[pair.id]),
+      easy,
+    }));
+  }
+
+  const keys = exo.sourceKeys || [exo.sourceKey];
+  return keys.filter(Boolean).map((key) => ({ key, ok, easy }));
+}
+
 /** Valeur initiale de la réponse, selon le type d'exercice. */
 export function emptyAnswer(exo) {
   if (!exo) return null;

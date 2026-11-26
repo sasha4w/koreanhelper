@@ -1,9 +1,37 @@
 import { makeRng } from "./rng";
 import { GENERATORS_BY_KIND, VOCAB_KINDS, LESSON_KINDS } from "./generators";
 import { fromDbRows } from "./fromDb";
-import { priority } from "../progress";
+import { getState, isMasteredNotDue, selectionWeight } from "../progress";
 
 export const ALL_KINDS = [...VOCAB_KINDS, ...LESSON_KINDS];
+
+/** Part maximale d'items maîtrisés (non dus) dans une session. */
+export const MASTERED_SHARE = 0.1;
+
+/**
+ * Ordre de passage par tirage pondéré sans remise (Efraimidis–Spirakis) :
+ * chaque item reçoit une clé -ln(u) / poids, les plus petites passent d'abord.
+ * Un item à poids 3 sort en moyenne bien avant un item à poids 0.03, sans que
+ * l'ordre soit figé d'une session à l'autre.
+ *
+ * @template T
+ * @param {T[]} items
+ * @param {(item: T) => string} keyOf clé de progression ("vocab:12"…)
+ * @param {Function} rng générateur seedé (rng.js)
+ * @returns {T[]}
+ */
+export function orderByNeed(items, keyOf, rng) {
+  const state = getState();
+  const now = Date.now();
+  return items
+    .map((item) => {
+      const weight = Math.max(selectionWeight(keyOf(item), now, state), 1e-6);
+      const u = Math.max(rng(), 1e-12);
+      return { item, rank: -Math.log(u) / weight };
+    })
+    .sort((a, b) => a.rank - b.rank)
+    .map(({ item }) => item);
+}
 
 /**
  * Construit une session d'exercices à partir des données brutes.
@@ -62,19 +90,34 @@ export function buildSession({
     ...lessonPool.map((item) => ({ item, source: "lesson" })),
   ];
 
-  const scored = rng.shuffle(candidates).map((c) => ({
-    ...c,
-    score: useProgress
-      ? priority(sourceKeyOf(c)) + rng() * 12 // bruit : évite un ordre figé
-      : rng() * 100,
-  }));
-  scored.sort((a, b) => b.score - a.score);
+  const ordered = useProgress
+    ? orderByNeed(candidates, sourceKeyOf, rng)
+    : rng.shuffle(candidates);
+
+  // Les items maîtrisés et pas encore dus ne prennent qu'une petite part de
+  // la session (rappel ponctuel) ; ils ne complètent la session qu'en dernier
+  // recours, quand le filtre ne laisse rien d'autre.
+  const masteredCap = Math.max(1, Math.floor(count * MASTERED_SHARE));
+  const state = getState();
+  const now = Date.now();
+  const isMastered = (c) =>
+    useProgress && isMasteredNotDue(sourceKeyOf(c), now, state);
+  const firstPass = [];
+  const overflow = [];
+  let masteredTaken = 0;
+  for (const c of ordered) {
+    if (isMastered(c) && masteredTaken >= masteredCap) overflow.push(c);
+    else {
+      if (isMastered(c)) masteredTaken++;
+      firstPass.push(c);
+    }
+  }
 
   const vocabKinds = VOCAB_KINDS.filter((k) => enabled.has(k));
   const lessonKinds = LESSON_KINDS.filter((k) => enabled.has(k));
 
   // 3) Pour chaque item, on tente un type d'exercice compatible.
-  for (const { item, source } of scored) {
+  for (const { item, source } of [...firstPass, ...overflow]) {
     if (exercises.length >= count) break;
     if (source === "vocab" && consumedVocab.has(item.id)) continue;
 

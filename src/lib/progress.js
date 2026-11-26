@@ -56,10 +56,34 @@ const dayKey = (ts = Date.now()) => new Date(ts).toISOString().slice(0, 10);
 /* ───────────────── Enregistrement d'une réponse ───────────────── */
 
 /**
+ * Boîte maximale atteignable avec un exercice « facile » (QCM, appariement) :
+ * reconnaître un mot parmi 4 ne prouve pas qu'on sait le produire. Pour aller
+ * au-delà (presque acquis → maîtrisé), il faut réussir un exercice de saisie.
+ */
+export const EASY_MAX_BOX = 3;
+
+/**
+ * Boîte suivante après une réponse.
+ *  - juste : +1 (plafonné à EASY_MAX_BOX si l'exercice est facile, sans
+ *    jamais faire redescendre un mot déjà plus haut)
+ *  - faux  : −1, ou −2 depuis « presque acquis » / « maîtrisé » (boîte ≥ 4),
+ *    au lieu de l'ancien retour brutal en boîte 1
+ */
+export function nextBox(box, ok, { easy = false } = {}) {
+  const current = Math.min(Math.max(box || 1, 1), MAX_BOX);
+  if (ok) {
+    if (easy && current >= EASY_MAX_BOX) return current;
+    return Math.min(current + 1, easy ? EASY_MAX_BOX : MAX_BOX);
+  }
+  return Math.max(1, current - (current >= 4 ? 2 : 1));
+}
+
+/**
  * @param {string} sourceKey ex. "vocab:123"
  * @param {boolean} ok
+ * @param {{ easy?: boolean }} [opts] easy : exercice de reconnaissance (QCM…)
  */
-export function recordAnswer(sourceKey, ok) {
+export function recordAnswer(sourceKey, ok, opts = {}) {
   if (!sourceKey) return;
   const state = read();
   const now = Date.now();
@@ -71,7 +95,7 @@ export function recordAnswer(sourceKey, ok) {
     lastSeen: null,
   };
 
-  const box = ok ? Math.min(prev.box + 1, MAX_BOX) : 1;
+  const box = nextBox(prev.box, ok, opts);
 
   write({
     ...state,
@@ -131,17 +155,32 @@ export function getEntry(sourceKey) {
 }
 
 /**
- * Priorité de révision d'un item : plus le score est haut, plus il passe tôt.
- *  - jamais vu       → 50 (on veut de la nouveauté, sans noyer les révisions)
- *  - dû et raté      → jusqu'à 100
- *  - maîtrisé récent → 0
+ * Poids de tirage d'un item hors révision due, par boîte (index = box - 1) :
+ * plus un mot est acquis, plus il se fait rare dans les tirages aléatoires.
  */
-export function priority(sourceKey, now = Date.now()) {
-  const entry = read().items[sourceKey];
-  if (!entry) return 50;
-  if (!isDue(entry, now)) return 0;
-  const failRate = entry.seen ? entry.wrong / entry.seen : 0;
-  return 60 + failRate * 40 - (entry.box - 1) * 5;
+export const NOT_DUE_WEIGHTS = [0.5, 0.3, 0.15, 0.08, 0.03];
+
+/**
+ * Poids de tirage d'un item (tirage pondéré, voir buildSession) :
+ *  - jamais vu        → 1
+ *  - dû               → 1.5 à ~3.5 selon le taux d'échec (révisions d'abord)
+ *  - pas encore dû    → NOT_DUE_WEIGHTS[box - 1] (0.5 → 0.03)
+ */
+export function selectionWeight(sourceKey, now = Date.now(), state = read()) {
+  const entry = state.items[sourceKey];
+  if (!entry) return 1;
+  const box = Math.min(Math.max(entry.box || 1, 1), MAX_BOX);
+  if (isDue(entry, now)) {
+    const failRate = entry.seen ? entry.wrong / entry.seen : 0;
+    return 1.5 + failRate * 2 - (box - 1) * 0.1;
+  }
+  return NOT_DUE_WEIGHTS[box - 1];
+}
+
+/** Item maîtrisé (boîte max) et pas encore à revoir. */
+export function isMasteredNotDue(sourceKey, now = Date.now(), state = read()) {
+  const entry = state.items[sourceKey];
+  return Boolean(entry && entry.box >= MAX_BOX && !isDue(entry, now));
 }
 
 /** Items dus, triés du plus urgent (le plus raté) au moins urgent. */
