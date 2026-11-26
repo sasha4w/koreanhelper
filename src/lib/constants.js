@@ -40,6 +40,11 @@ export const KIND_LABELS = {
   "sentence-order": "Remettre dans l'ordre",
   "db-blanks": "Exercice à trous",
   "db-qcm": "QCM",
+  conjugate: "Conjuguer un mot",
+  "conjugate-qcm": "Trouver la bonne forme",
+  particle: "Choisir la particule",
+  "sentence-blanks": "Phrase à compléter",
+  "sentence-build": "Construire la phrase",
 };
 
 /** Composant icône par type d'exercice (utiliser <KIND_ICONS[kind] />). */
@@ -53,6 +58,11 @@ export const KIND_ICONS = {
   "sentence-order": Shuffle,
   "db-blanks": Pencil,
   "db-qcm": ListChecks,
+  conjugate: Keyboard,
+  "conjugate-qcm": Puzzle,
+  particle: LinkIcon,
+  "sentence-blanks": Pencil,
+  "sentence-build": Keyboard,
 };
 
 export const DEFAULT_KIND_ICON = Pencil;
@@ -62,4 +72,7 @@ export const KINDS_NEEDING_IME = new Set([
   "fr-to-ko",
   "blank-from-example",
   "db-blanks",
+  "conjugate",
+  "sentence-blanks",
+  "sentence-build",
 ]);

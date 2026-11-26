@@ -6,10 +6,16 @@ export const CHOICE_KINDS = new Set([
   "odd-one-out",
   "grammar-qcm",
   "db-qcm",
+  "conjugate-qcm",
+  "particle",
 ]);
 
 /** Types dont la réponse est saisie dans des trous. */
-export const BLANK_KINDS = new Set(["blank-from-example", "db-blanks"]);
+export const BLANK_KINDS = new Set([
+  "blank-from-example",
+  "db-blanks",
+  "sentence-blanks",
+]);
 
 /**
  * Exercices de reconnaissance : la réponse est sous les yeux. Ils font
@@ -39,6 +45,20 @@ export function progressUpdates(exo, ok, detail = {}) {
       ok: Boolean(results[pair.id]),
       easy,
     }));
+  }
+
+  // Phrase à trous multiples : chaque trou note ses propres leçons (une
+  // particule ratée ne pénalise pas la conjugaison réussie, et inversement).
+  // Une clé présente dans plusieurs trous n'est juste que si tous le sont.
+  if (exo.blankKeys) {
+    const results = detail.results || {};
+    const byKey = new Map();
+    for (const [index, keys] of Object.entries(exo.blankKeys)) {
+      for (const key of keys) {
+        byKey.set(key, (byKey.get(key) ?? true) && Boolean(results[index]));
+      }
+    }
+    return [...byKey].map(([key, good]) => ({ key, ok: good, easy }));
   }
 
   const keys = exo.sourceKeys || [exo.sourceKey];

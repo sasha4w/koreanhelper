@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check:engine": "esbuild scripts/smoke-engine.mjs --bundle --platform=node --format=esm --outfile=node_modules/.tmp-smoke.mjs --log-level=error && node node_modules/.tmp-smoke.mjs",
+    "check:conjugate": "esbuild scripts/smoke-conjugate.mjs --bundle --platform=node --format=esm --outfile=node_modules/.tmp-smoke-conj.mjs --log-level=error && node node_modules/.tmp-smoke-conj.mjs",
     "check:hangul": "esbuild scripts/smoke-hangul.mjs --bundle --platform=node --format=esm --outfile=node_modules/.tmp-smoke-hangul.mjs --log-level=error && node node_modules/.tmp-smoke-hangul.mjs"
   },
   "dependencies": {

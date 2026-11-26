@@ -55,7 +55,9 @@ function InputBody({ exo, value, onChange, onSubmit, submitted }) {
 
   return (
     <>
-      <p className="ex-question">{exo.question}</p>
+      <p className={`ex-question ${exo.questionLang === "ko" ? "ko" : ""}`}>
+        {exo.question}
+      </p>
       <span
         ref={mirrorRef}
         className={`ex-input-mirror ${exo.lang === "ko" ? "ko" : ""}`}
@@ -218,14 +220,16 @@ function BlankToken({
   onKeyDown,
   onFocus,
 }) {
-  const { width, mirrorRef } = useAutoWidth(value || "···", {
+  // Indice facultatif (forme du dictionnaire du verbe à conjuguer)
+  const placeholder = seg.hint || "···";
+  const { width, mirrorRef } = useAutoWidth(value || placeholder, {
     min: Math.max(seg.answer.length, 2) * 15 + 24,
   });
 
   return (
     <span className="ex-blank">
       <span ref={mirrorRef} className="ex-input-mirror ko" aria-hidden="true">
-        {value || "···"}
+        {value || placeholder}
       </span>
       <input
         ref={registerRef}
@@ -236,7 +240,7 @@ function BlankToken({
         onKeyDown={onKeyDown}
         onFocus={onFocus}
         disabled={submitted}
-        placeholder="···"
+        placeholder={placeholder}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"

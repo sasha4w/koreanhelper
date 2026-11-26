@@ -25,7 +25,10 @@ function squashSpaces(text) {
 
 /** Normalisation coréenne : espaces uniquement (l'orthographe compte). */
 export function normalizeKo(text) {
-  return squashSpaces(text).normalize("NFC");
+  // Ponctuation finale ignorée : « 학교에 가요. » vaut « 학교에 가요 »
+  return squashSpaces(text)
+    .replace(/\s*[.!?。]+$/, "")
+    .normalize("NFC");
 }
 
 /** Normalisation française : casse, accents, ponctuation, article initial. */

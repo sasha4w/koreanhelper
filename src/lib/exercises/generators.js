@@ -1,8 +1,22 @@
 import { primaryAnswer } from "../normalize";
+import {
+  analyzeVerb,
+  attachParticle,
+  commonMistakes,
+  conjugate,
+} from "../conjugate";
+import {
+  endingFor,
+  particleForLesson,
+  verbEndingForLesson,
+  verbPos,
+} from "./endings";
+import { sentenceBlanks, sentenceBuild } from "./sentences";
 
 /**
- * Chaque générateur : { kind, source, generate(pivot, pool, rng) -> Exercise|null }
+ * Chaque générateur : { kind, source, generate(pivot, pool, rng, ctx) -> Exercise|null }
  * `pool` est l'ensemble des items disponibles de la même source (pour les distracteurs).
+ * `ctx` (optionnel) donne accès aux leçons pour les exercices vocab × grammaire.
  * Retourner null = « pas assez de matière », l'orchestrateur enchaîne sur un autre type.
  */
 
@@ -410,6 +424,183 @@ const sentenceOrder = {
   },
 };
 
+/* ───────────────── helpers vocabulaire × grammaire ───────────────── */
+
+/**
+ * `ctx` (fourni par buildSession) :
+ *  - lessons  : leçons grammaire + verbes disponibles (filtrées par niveau)
+ *  - weightOf : clé de progression → poids de tirage (leçons fragiles d'abord)
+ */
+
+/** Tirage pondéré d'un élément. */
+function weightedPick(rng, items, weightOf) {
+  if (!items.length) return undefined;
+  const weights = items.map((x) => Math.max(weightOf(x), 0));
+  const total = weights.reduce((a, b) => a + b, 0);
+  if (total <= 0) return rng.pick(items);
+  let r = rng() * total;
+  for (let i = 0; i < items.length; i++) {
+    r -= weights[i];
+    if (r < 0) return items[i];
+  }
+  return items[items.length - 1];
+}
+
+const ctxWeight = (ctx, key) => (ctx?.weightOf ? ctx.weightOf(key) : 1);
+const lessonKey = (l) => `${l.__table}:${l.id}`;
+
+/** Verbe conjugable + leçon de terminaison compatible, ou null. */
+function pickConjugation(w, rng, ctx) {
+  const pos = verbPos(w);
+  if (!pos || !hasWord(w)) return null;
+  const verb = analyzeVerb(w.hangul, pos);
+  if (!verb) return null;
+
+  const options = [];
+  for (const lesson of ctx?.lessons || []) {
+    const spec = verbEndingForLesson(lesson);
+    const ending = endingFor(spec, pos, verb);
+    if (!ending) continue;
+    const answer = conjugate(verb, ending);
+    if (answer) options.push({ lesson, spec, ending, answer });
+  }
+  const choice = weightedPick(rng, options, (o) =>
+    ctxWeight(ctx, lessonKey(o.lesson)),
+  );
+  if (!choice) return null;
+
+  const display = verb.prefix ? `${verb.prefix} ${verb.dict}` : verb.dict;
+  return { ...choice, verb, display, options };
+}
+
+function conjugationCommon(kind, w, c) {
+  return {
+    id: uid(kind, w.id, c.lesson.id),
+    kind,
+    level: String(w.level),
+    question: c.display,
+    questionLang: "ko",
+    promptSub: w.fr.trim(),
+    grammarPoint: c.lesson.title,
+    hint: c.lesson.formula || undefined,
+    explanation: c.lesson.description || undefined,
+    expected: c.answer,
+    lang: "ko",
+    tag: c.lesson.section || w.theme || undefined,
+    sourceKey: `vocab:${w.id}`,
+    // Le mot ET la terminaison progressent (ou reculent) ensemble
+    sourceKeys: [`vocab:${w.id}`, lessonKey(c.lesson)],
+  };
+}
+
+/* ───────────────── 8. Conjugaison (saisie) ───────────────── */
+
+const conjugateInput = {
+  kind: "conjugate",
+  source: "vocab",
+  generate(w, pool, rng, ctx) {
+    const c = pickConjugation(w, rng, ctx);
+    if (!c) return null;
+    return {
+      ...conjugationCommon("conjugate", w, c),
+      prompt: `Conjugue : ${c.spec.label}`,
+      reveal: c.answer,
+    };
+  },
+};
+
+/* ───────────────── 9. Conjugaison (QCM à pièges) ───────────────── */
+
+const conjugateQcm = {
+  kind: "conjugate-qcm",
+  source: "vocab",
+  generate(w, pool, rng, ctx) {
+    const c = pickConjugation(w, rng, ctx);
+    if (!c) return null;
+
+    // Pièges d'abord (irrégulier ignoré, 으 oublié…), puis, à défaut, le
+    // même verbe à une autre terminaison (tester le sens de la forme).
+    const seen = new Set([c.answer]);
+    const distractors = [];
+    const others = rng
+      .shuffle(c.options.filter((o) => o.spec.id !== c.spec.id))
+      .map((o) => o.answer);
+    for (const form of [...rng.shuffle(commonMistakes(c.verb, c.ending)), ...others]) {
+      if (distractors.length >= 3) break;
+      if (seen.has(form)) continue;
+      seen.add(form);
+      distractors.push(form);
+    }
+    if (distractors.length < 2) return null;
+
+    return {
+      ...conjugationCommon("conjugate-qcm", w, c),
+      prompt: `Choisis la forme : ${c.spec.label}`,
+      choices: rng.shuffle([c.answer, ...distractors]),
+      choicesLang: "ko",
+    };
+  },
+};
+
+/* ───────────────── 10. Particule selon le batchim ───────────────── */
+
+const hangulOnly = (s) => /^[가-힣]{1,6}$/.test(String(s || "").trim());
+
+const particle = {
+  kind: "particle",
+  source: "vocab",
+  generate(w, pool, rng, ctx) {
+    if (w?.type !== "명사" || !hasWord(w) || !hangulOnly(w.hangul)) return null;
+    const noun = w.hangul.trim();
+
+    const options = (ctx?.lessons || [])
+      .map((lesson) => ({ lesson, p: particleForLesson(lesson) }))
+      .filter((o) => o.p);
+    const choice = weightedPick(rng, options, (o) =>
+      ctxWeight(ctx, lessonKey(o.lesson)),
+    );
+    if (!choice) return null;
+
+    const { lesson, p } = choice;
+    const answer = attachParticle(noun, p.rule);
+    // L'autre variante de la même particule (학생가, 지하철으로)
+    const wrongForm =
+      answer === noun + p.rule.cons ? noun + p.rule.vowel : noun + p.rule.cons;
+    // Une autre particule (bonne et mauvaise forme) : tester aussi la fonction
+    const other = rng.pick(options.filter((o) => o.p.id !== p.id));
+    const extra = other
+      ? [noun + other.p.rule.cons, noun + other.p.rule.vowel]
+      : [];
+
+    const seen = new Set([answer]);
+    const distractors = [];
+    for (const form of [wrongForm, ...extra]) {
+      if (!form || seen.has(form)) continue;
+      seen.add(form);
+      distractors.push(form);
+    }
+    if (!distractors.length) return null;
+
+    return {
+      id: uid("particle", w.id, lesson.id),
+      kind: "particle",
+      level: String(lesson.level ?? w.level),
+      prompt: `Ajoute la bonne particule (${p.label})`,
+      promptSub: w.fr.trim(),
+      question: `${noun} + ${lesson.title}`,
+      questionLang: "ko",
+      choices: rng.shuffle([answer, ...distractors]),
+      choicesLang: "ko",
+      expected: answer,
+      lang: "ko",
+      hint: lesson.formula || undefined,
+      explanation: lesson.formula || lesson.description || undefined,
+      tag: lesson.section || undefined,
+      sourceKey: lessonKey(lesson),
+    };
+  },
+};
+
 export const GENERATORS = [
   frToKo,
   koToFr,
@@ -418,6 +609,11 @@ export const GENERATORS = [
   grammarQcm,
   blankFromExample,
   sentenceOrder,
+  conjugateInput,
+  conjugateQcm,
+  particle,
+  sentenceBlanks,
+  sentenceBuild,
 ];
 
 export const GENERATORS_BY_KIND = Object.fromEntries(

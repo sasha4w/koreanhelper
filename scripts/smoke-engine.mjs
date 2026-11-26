@@ -16,15 +16,32 @@ import {
   selectionWeight,
 } from "../src/lib/progress.js";
 import { fromDbRows } from "../src/lib/exercises/fromDb.js";
+import { makeRng } from "../src/lib/exercises/rng.js";
+import {
+  buildSentence,
+  sentenceBlanks,
+  sentenceBuild,
+} from "../src/lib/exercises/sentences.js";
+import { SLOTS, TEMPLATES } from "../src/lib/exercises/templates.js";
+import { VERB_ENDINGS } from "../src/lib/exercises/endings.js";
+import { analyzeVerb } from "../src/lib/conjugate.js";
 
 const themes = ["Nourriture", "Famille", "Voyage", "École"];
+// Vrais mots : les générateurs de conjugaison / particules en ont besoin
+const REAL = {
+  명사: "학생 친구 책 물 사과 가방 집 버스 손 지하철 우유 시계 의자 커피 빵 꽃".split(" "),
+  동사: "먹다 가다 보다 살다 듣다 마시다 공부하다 만들다 읽다 쓰다 오다 배우다 기다리다 놀다 앉다 웃다".split(" "),
+  형용사: "춥다 바쁘다 좋다 크다 작다 덥다 많다 예쁘다 빠르다 그렇다 비싸다 싸다 길다 높다 쉽다 어렵다".split(" "),
+};
+const used = { 명사: 0, 동사: 0, 형용사: 0 };
 const vocab = [];
 let id = 1;
 for (const theme of themes) {
   for (let i = 0; i < 12; i++) {
+    const type = i % 3 === 0 ? "명사" : i % 3 === 1 ? "동사" : "형용사";
     vocab.push({
       id: id++,
-      hangul: `단어${id}`,
+      hangul: REAL[type][used[type]++],
       fr: `mot ${id}`,
       type: i % 3 === 0 ? "명사" : i % 3 === 1 ? "동사" : "형용사",
       theme,
@@ -114,6 +131,7 @@ const verbes = [
     description: "Futur / intention.",
     examples: [{ kor: "내일 갈 거예요", fr: "J'irai demain" }],
   },
+  { id: 20, level: 1, section: "Désir", title: "-고 싶어요", formula: "V + 고 싶어요", description: "Exprimer un désir.", examples: [] },
 ];
 
 const dbRows = [
@@ -377,6 +395,82 @@ check(
   onlyMastered.length === 10,
 );
 reset();
+
+/* ── 11. Phrases complètes (plusieurs points de grammaire) ── */
+const tagged = [
+  ...lessons.map((l) => ({ ...l, __table: "grammaire" })),
+  ...verbes.map((l) => ({ ...l, __table: "verbes" })),
+];
+const bread = vocab.find((w) => w.hangul === "빵");
+const wantEat = TEMPLATES.find((t) => t.id === "want-eat");
+const built = buildSentence(wantEat, bread, { lessons: tagged, vocab }, makeRng(1));
+check(
+  "phrase : 집에서 빵을 먹고 싶어요",
+  built?.sentence === "집에서 빵을 먹고 싶어요",
+  built?.sentence,
+);
+check(
+  "phrase : 3 points de grammaire",
+  built?.labels.length === 3,
+  built?.labels.join(" · "),
+);
+check(
+  "phrase : leçon manquante → pas d'exercice",
+  buildSentence(wantEat, bread, { lessons: [], vocab }, makeRng(1)) === null,
+);
+
+const blanksExo = sentenceBlanks.generate(bread, vocab, makeRng(2), {
+  lessons: tagged,
+  vocab,
+});
+check("phrase à trous : 3 trous", blanksExo?.expected.length === 3);
+const partial = checkAnswer(blanksExo, { 0: "에서", 1: "를", 2: "먹고 싶어요" });
+const partialUpdates = progressUpdates(blanksExo, partial.ok, partial.detail);
+const upd = Object.fromEntries(partialUpdates.map((u) => [u.key, u.ok]));
+check(
+  "phrase à trous : seule la particule ratée recule",
+  partial.ok === false &&
+    upd["grammaire:4"] === true &&
+    upd["grammaire:3"] === false &&
+    upd["verbes:20"] === true,
+  JSON.stringify(upd),
+);
+check(
+  "phrase à construire : ponctuation finale tolérée",
+  checkAnswer(
+    sentenceBuild.generate(bread, vocab, makeRng(3), { lessons: tagged, vocab }),
+    "집에서 빵을 먹고 싶어요.",
+  ).ok,
+);
+
+/* ── 12. Modèles de phrases : références valides ── */
+for (const t of TEMPLATES) {
+  const problems = [];
+  for (const part of t.parts) {
+    if (part.slot && !SLOTS[part.slot]) problems.push(`liste ${part.slot}`);
+    if (part.verbSlot && !SLOTS[part.verbSlot])
+      problems.push(`liste ${part.verbSlot}`);
+    if (part.slot && !part.g) problems.push(`particule manquante (${part.slot})`);
+    if (
+      typeof part.ending === "string" &&
+      !VERB_ENDINGS.some((s) => s.id === part.ending)
+    )
+      problems.push(`terminaison ${part.ending}`);
+    if (part.verb && !analyzeVerb(part.verb, part.pos || "verb"))
+      problems.push(`verbe ${part.verb}`);
+    for (const v of part.verbSlot ? SLOTS[part.verbSlot] || [] : [])
+      if (!analyzeVerb(v, "verb")) problems.push(`verbe ${v}`);
+    if (part.after && !t.parts.some((x) => (x.as || x.slot) === part.after))
+      problems.push(`after ${part.after}`);
+  }
+  for (const name of t.fr.match(/\{(\w+)\}/g) || []) {
+    const key = name.slice(1, -1);
+    if (!t.parts.some((x) => (x.as || x.slot || x.verbSlot) === key))
+      problems.push(`fr ${name}`);
+  }
+  check(`modèle ${t.id} : références valides`, problems.length === 0, problems.join(", "));
+}
+check("identifiants de modèles uniques", new Set(TEMPLATES.map((t) => t.id)).size === TEMPLATES.length);
 
 console.log(
   failures === 0

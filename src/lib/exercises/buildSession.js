@@ -63,10 +63,26 @@ export function buildSession({
   const enabled = new Set(kinds);
 
   const vocabPool = vocab.filter((w) => matchesVocab(w, filters));
-  const lessonPool = [
+  const allLessons = [
     ...tagTable(grammaire, "grammaire"),
     ...tagTable(verbes, "verbes"),
-  ].filter((l) => matchesLesson(l, filters));
+  ];
+  const lessonPool = allLessons.filter((l) => matchesLesson(l, filters));
+
+  // Exercices vocab × grammaire : un thème ou un chapitre de vocabulaire
+  // n'exclut pas les leçons (on conjugue les mots du thème) ; seul le niveau
+  // compte, de façon cumulative : au niveau 2, la grammaire du niveau 1
+  // (particules…) reste acquise et réutilisable.
+  const progressState = getState();
+  const ctx = {
+    lessons: allLessons.filter((l) => levelAtMost(l, filters.level)),
+    // Mots pour compléter les phrases (le pivot vient du filtre, les autres
+    // places peuvent venir de tout le vocabulaire déjà vu)
+    vocab: vocab.filter((w) => levelAtMost(w, filters.level)),
+    weightOf: useProgress
+      ? (key) => selectionWeight(key, Date.now(), progressState)
+      : () => 1,
+  };
 
   const exercises = [];
   const usedIds = new Set(); // exercices déjà produits
@@ -129,7 +145,7 @@ export function buildSession({
       const generator = GENERATORS_BY_KIND[kind];
       if (!generator) continue;
 
-      const exo = safeGenerate(generator, item, pool, rng);
+      const exo = safeGenerate(generator, item, pool, rng, ctx);
       if (!exo || usedIds.has(exo.id)) continue;
 
       usedIds.add(exo.id);
@@ -143,9 +159,9 @@ export function buildSession({
   return rng.shuffle(exercises).slice(0, count);
 }
 
-function safeGenerate(generator, item, pool, rng) {
+function safeGenerate(generator, item, pool, rng, ctx) {
   try {
-    return generator.generate(item, pool, rng);
+    return generator.generate(item, pool, rng, ctx);
   } catch (err) {
     console.warn(`Générateur "${generator.kind}" en échec :`, err);
     return null;
@@ -166,6 +182,13 @@ function tagTable(rows, table) {
 
 function levelOk(row, level) {
   return !level || level === "all" || String(row.level) === String(level);
+}
+
+/** Niveau inférieur ou égal au filtre (« all » : tout). */
+function levelAtMost(row, level) {
+  if (!level || level === "all") return true;
+  const n = Number(row.level);
+  return Number.isFinite(n) ? n <= Number(level) : levelOk(row, level);
 }
 
 function matchesVocab(w, f) {

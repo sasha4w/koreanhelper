@@ -53,7 +53,7 @@ const FINAL_DECOMPOSE = {
 const isInitialKey = (ch) => INITIALS.includes(ch);
 const isBaseMedialKey = (ch) => BASE_MEDIALS.includes(ch);
 
-function composeSyllable(iCh, mCh, fCh = "") {
+export function composeSyllable(iCh, mCh, fCh = "") {
   const i = INITIALS.indexOf(iCh);
   const m = MEDIALS.indexOf(mCh);
   const f = FINALS.indexOf(fCh);
@@ -61,7 +61,7 @@ function composeSyllable(iCh, mCh, fCh = "") {
   return String.fromCharCode(0xac00 + (i * 21 + m) * 28 + f);
 }
 
-function decomposeSyllable(ch) {
+export function decomposeSyllable(ch) {
   const code = ch.codePointAt(0) - 0xac00;
   if (code < 0 || code > 11171) return null; // pas une syllabe précomposée
   const f = code % 28;
