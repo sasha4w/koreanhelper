@@ -263,7 +263,7 @@ export default function Progres() {
           {earned.map((b) => (
             <li key={b.id} className={b.got ? "got" : "locked"} data-tip={b.hint}>
               <span className="pg-badge-icon">
-                <Trophy />
+                <Trophy filled={b.got} />
               </span>
               <span className="pg-badge-label">{b.label}</span>
               <span className="pg-badge-hint">{b.hint}</span>

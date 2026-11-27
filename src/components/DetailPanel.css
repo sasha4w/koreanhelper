@@ -43,7 +43,7 @@
   cursor: pointer;
 }
 
-.detail-panel-back svg {
+.detail-panel-back .icon {
   transform: rotate(180deg);
 }
 
