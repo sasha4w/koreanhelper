@@ -17,22 +17,24 @@ export const normTitle = (title) =>
  * pos : "verb" (verbes d'action seulement), "both", ou des terminaisons
  * différentes selon la nature ({ verb, adj }).
  * agentive : terminaison qui suppose une action volontaire (voir endingFor).
+ * prohibition : interdiction, possible aussi pour une émotion / un accident.
+ * progressive : progressif, exclu pour un état ou une action subie ponctuelle.
  * label : consigne courte affichée dans l'exercice.
  */
 export const VERB_ENDINGS = [
   { id: "present", test: /^(아요\/어요|아\/어요)$/, label: "présent poli -아/어요", pos: "both", ending: { base: "aeo", suffix: "요" } },
   { id: "past", test: /^(았어요\/었어요|았\/었어요)$/, label: "passé poli -았/었어요", pos: "both", ending: { base: "aeo", suffix: "ㅆ어요" } },
   { id: "future", test: /^\(으\)ㄹ거예요$/, label: "futur -(으)ㄹ 거예요", pos: "both", ending: { base: "eu", suffix: "ㄹ 거예요" } },
-  { id: "go-iteoyo", agentive: true, test: /^고\/고있어요$/, label: "progressif -고 있어요", pos: "verb", ending: { base: "plain", suffix: "고 있어요" } },
-  { id: "myeonseo", agentive: true, test: /^\(으\)면서$/, label: "simultanéité -(으)면서", pos: "verb", ending: { base: "eu", suffix: "면서" } },
+  { id: "go-iteoyo", progressive: true, test: /^고\/고있어요$/, label: "progressif -고 있어요", pos: "verb", ending: { base: "plain", suffix: "고 있어요" } },
+  { id: "myeonseo", test: /^\(으\)면서$/, label: "simultanéité -(으)면서", pos: "verb", ending: { base: "eu", suffix: "면서" } },
   { id: "aseo", test: /^아서\/어서$/, label: "cause / succession -아/어서", pos: "both", ending: { base: "aeo", suffix: "서" } },
   { id: "myeon", test: /^\(으\)면$/, label: "condition -(으)면", pos: "both", ending: { base: "eu", suffix: "면" } },
   { id: "geona", test: /^거나$/, label: "alternative -거나", pos: "both", ending: { base: "plain", suffix: "거나" } },
   { id: "reo-gada", agentive: true, test: /^\(으\)러가다\/오다$/, label: "but du déplacement -(으)러 가요", pos: "verb", ending: { base: "eu", suffix: "러 가요" } },
-  { id: "su-itda", agentive: true, test: /^\(으\)ㄹ수있다\/없다$/, label: "capacité -(으)ㄹ 수 있어요", pos: "verb", ending: { base: "eu", suffix: "ㄹ 수 있어요" } },
+  { id: "su-itda", test: /^\(으\)ㄹ수있다\/없다$/, label: "capacité -(으)ㄹ 수 있어요", pos: "verb", ending: { base: "eu", suffix: "ㄹ 수 있어요" } },
   { id: "jul-alda", agentive: true, test: /^\(으\)ㄹ줄알다\/모르다$/, label: "savoir-faire -(으)ㄹ 줄 알아요", pos: "verb", ending: { base: "eu", suffix: "ㄹ 줄 알아요" } },
   { id: "seyo", agentive: true, test: /^\(으\)세요$/, label: "impératif poli -(으)세요", pos: "verb", ending: { base: "eu", suffix: "세요" } },
-  { id: "ji-maseyo", agentive: true, test: /^지마세요$/, label: "interdiction -지 마세요", pos: "verb", ending: { base: "plain", suffix: "지 마세요" } },
+  { id: "ji-maseyo", prohibition: true, test: /^지마세요$/, label: "interdiction -지 마세요", pos: "verb", ending: { base: "plain", suffix: "지 마세요" } },
   { id: "go-sipeoyo", agentive: true, test: /^고싶어요$/, label: "désir -고 싶어요", pos: "verb", ending: { base: "plain", suffix: "고 싶어요" } },
   { id: "a-boda", agentive: true, test: /^아\/어보다$/, label: "expérience -아/어 봤어요", pos: "verb", ending: { base: "aeo", suffix: " 봤어요" } },
   { id: "aya-doeda", test: /^아야\/어야되다$/, label: "obligation -아/어야 돼요", pos: "both", ending: { base: "aeo", suffix: "야 돼요" } },
@@ -41,7 +43,7 @@ export const VERB_ENDINGS = [
   { id: "a-deurilkkayo", agentive: true, test: /^아\/어드릴까요\?$/, label: "proposition -아/어 드릴까요 ?", pos: "verb", ending: { base: "aeo", suffix: " 드릴까요" } },
   { id: "a-boida", test: /^아\/어보이다$/, label: "apparence -아/어 보여요", pos: "adj", ending: { base: "aeo", suffix: " 보여요" } },
   { id: "eodo-doeda", agentive: true, test: /^아\/어도되다$/, label: "permission -아/어도 돼요", pos: "verb", ending: { base: "aeo", suffix: "도 돼요" } },
-  { id: "myeon-an-doeda", agentive: true, test: /^\(으\)면안되다$/, label: "interdiction -(으)면 안 돼요", pos: "verb", ending: { base: "eu", suffix: "면 안 돼요" } },
+  { id: "myeon-an-doeda", test: /^\(으\)면안되다$/, label: "interdiction -(으)면 안 돼요", pos: "verb", ending: { base: "eu", suffix: "면 안 돼요" } },
   { id: "myeon-doeda", test: /^\(으\)면되다$/, label: "suffisance -(으)면 돼요", pos: "verb", ending: { base: "eu", suffix: "면 돼요" } },
   { id: "nikka", test: /^\(으\)니까$/, label: "cause -(으)니까", pos: "both", ending: { base: "eu", suffix: "니까" } },
   { id: "ryeogo", agentive: true, test: /^\(으\)려고$/, label: "intention -(으)려고", pos: "verb", ending: { base: "eu", suffix: "려고" } },
@@ -58,7 +60,7 @@ export const VERB_ENDINGS = [
   { id: "gi-eoryeopda", test: /^기\(가\)쉽다\/어렵다$/, label: "facilité -기 어려워요", pos: "verb", ending: { base: "plain", suffix: "기 어려워요" } },
   { id: "ltte", test: /^\(으\)ㄹ때$/, label: "moment -(으)ㄹ 때", pos: "both", ending: { base: "eu", suffix: "ㄹ 때" } },
   { id: "asseul-ttae", test: /^았\/었을때$/, label: "moment passé -았/었을 때", pos: "both", ending: { base: "aeo", suffix: "ㅆ을 때" } },
-  { id: "eun-jeok", agentive: true, test: /^\(으\)ㄴ적이있다\/없다$/, label: "expérience -(으)ㄴ 적이 있어요", pos: "verb", ending: { base: "eu", suffix: "ㄴ 적이 있어요" } },
+  { id: "eun-jeok", test: /^\(으\)ㄴ적이있다\/없다$/, label: "expérience -(으)ㄴ 적이 있어요", pos: "verb", ending: { base: "eu", suffix: "ㄴ 적이 있어요" } },
   { id: "l-ppeonhada", test: /^\(으\)ㄹ뻔하다$/, label: "« avoir failli » -(으)ㄹ 뻔했어요", pos: "verb", ending: { base: "eu", suffix: "ㄹ 뻔했어요" } },
   { id: "nde", test: /^\(으\)ㄴ데\/는데$/, label: "contraste / contexte -(으)ㄴ데 / -는데", pos: { verb: { base: "plain", suffix: "는데" }, adj: { base: "eu", suffix: "ㄴ데" } } },
   { id: "pyeon", test: /^\(으\)ㄴ\/는편이다$/, label: "tendance -(으)ㄴ/는 편이에요", pos: { verb: { base: "plain", suffix: "는 편이에요" }, adj: { base: "eu", suffix: "ㄴ 편이에요" } } },
@@ -76,10 +78,20 @@ export const VERB_ENDINGS = [
 /** Terminaison applicable à un verbe de nature `pos`, ou null. */
 export function endingFor(spec, pos, verb) {
   if (!spec) return null;
-  // Terminaisons volontaires (impératif, désir, promesse…) : pas avec un
-  // sujet non humain exprimé (« 살이 찌세요 » n'a pas de sens).
-  if (spec.agentive && verb?.hasSubject) return null;
-  if (typeof spec.pos === "object") return spec.pos[pos] || null;
+  // Contrôle de l'action (voir controlOf dans conjugate.js) :
+  //  - volontaire (impératif, désir, promesse…) : action voulue seulement
+  //    (« 다치고 싶어요 », « 배송되세요 », « 살이 찌세요 » n'ont pas de sens)
+  //  - interdiction : aussi les émotions / accidents (« 긴장하지 마세요 »)
+  const control = verb?.control ?? (verb?.hasSubject ? "none" : "full");
+  if (spec.agentive && control !== "full") return null;
+  if (spec.prohibition && (control === "none" || verb?.noProhibition)) return null;
+  // Progressif : pas pour un état ni une action ponctuelle subie
+  // (« 오래되고 있어요 », « 다치고 있어요 »)
+  if (spec.progressive && (control === "emotion" || verb?.stative)) return null;
+  if (typeof spec.pos === "object") {
+    // 있다 / 없다 (맛있다, 재미없다…) suivent la forme verbale : 맛있는데
+    return spec.pos[verb?.takesNeun ? "verb" : pos] || null;
+  }
   if (spec.pos === "both" || spec.pos === pos) return spec.ending;
   return null;
 }

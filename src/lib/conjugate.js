@@ -41,8 +41,50 @@ const REG_REU = ["따르다", "치르다", "들르다"];
 // comparés à la forme exacte, pas en suffixe (보이다 ≠ 이다).
 const AMBIGUOUS = ["묻다", "굽다", "이르다", "이다", "아니다", "뵙다"];
 
+/**
+ * Homonymes dont la conjugaison dépend du sens : le contexte entre
+ * parenthèses (« (길을) 묻다 ») permet de trancher. Renvoie la classe
+ * de radical, ou null si le contexte ne suffit pas.
+ */
+const DISAMBIGUATE = {
+  // demander : ㄷ irrégulier (물어요) / être taché, enterrer : régulier (묻어요)
+  묻다: (ctx) =>
+    /길|질문|물어|안부|이름|의견/.test(ctx) ? "d" : /얼룩|흙|때|땅/.test(ctx) ? "cons" : null,
+  // griller : ㅂ irrégulier (구워요) / se courber : régulier (굽어요)
+  굽다: (ctx) =>
+    /고기|빵|생선|요리|불/.test(ctx) ? "b" : /허리|등|길이/.test(ctx) ? "cons" : null,
+};
+
 const endsWithAny = (word, list) =>
   list.some((x) => word === x || word.endsWith(x));
+
+/* ───────────────── Contrôle de l'action ─────────────────
+   Certaines terminaisons supposent une action voulue (impératif, désir,
+   promesse…) : « 다치고 싶어요 », « 배송되세요 » n'ont pas de sens.
+     full     action volontaire : toutes les terminaisons
+     emotion  émotion / accident : seulement l'interdiction
+              (« 긴장하지 마세요 », « 넘어지지 마세요 » sont naturels)
+     none     passif, perception, sujet exprimé : aucune des deux */
+const NO_CONTROL = ["보이다", "들리다", "생기다", "오래되다", "붓다"];
+const EMOTION_OR_ACCIDENT = [
+  "놀라다", "당황하다", "실망하다", "긴장하다", "감동하다",
+  "다치다", "죽다", "졸다", "잃어버리다",
+];
+// Ne se mettent pas au progressif -고 있어요 (état, perception)
+const STATIVE = ["오래되다", "보이다", "들리다"];
+// Volontaires, mais l'interdiction n'a pas de sens (« 낫지 마세요 »)
+const NO_PROHIBITION = ["낫다"];
+// Adverbes en -이 qui ne sont pas des sujets (« 같이 가다 »)
+const ADVERBS_I = ["같이", "많이", "깊이", "높이", "깨끗이", "천천히"];
+
+function controlOf(dict, hasSubject) {
+  if (hasSubject) return "none";
+  if (NO_CONTROL.includes(dict)) return "none";
+  if (dict.length > 2 && dict.endsWith("되다")) return "none"; // 배송되다, 오염되다
+  if (EMOTION_OR_ACCIDENT.includes(dict)) return "emotion";
+  if (/(어|아|여|러)지다$|깨지다$/.test(dict)) return "emotion"; // 넘어지다, 깨지다
+  return "full";
+}
 
 /* ───────────────── Helpers syllabes ───────────────── */
 
@@ -87,7 +129,9 @@ const bright = (m) => m === "ㅏ" || m === "ㅗ" || m === "ㅑ";
  * @returns {{ prefix: string, stem: string, cls: string, pos: string, dict: string } | null}
  */
 export function analyzeVerb(word, pos = "verb") {
-  // « (파일을) 저장하다 » : le contexte entre parenthèses n'est pas conjugué
+  // « (파일을) 저장하다 » : le contexte entre parenthèses n'est pas conjugué,
+  // mais il peut lever l'ambiguïté d'un homonyme (« (길을) 묻다 »)
+  const context = (String(word || "").match(/\(([^)]*)\)/g) || []).join(" ");
   const clean = String(word || "")
     .replace(/\([^)]*\)/g, " ")
     .replace(/\s+/g, " ")
@@ -98,7 +142,8 @@ export function analyzeVerb(word, pos = "verb") {
   const dict = words.at(-1);
   const prefix = words.slice(0, -1).join(" ");
   if (dict.length < 2 || !dict.endsWith("다")) return null;
-  if (AMBIGUOUS.includes(dict)) return null;
+  const resolved = DISAMBIGUATE[dict]?.(`${context} ${prefix}`) ?? null;
+  if (AMBIGUOUS.includes(dict) && !resolved) return null;
   // Nom + 이다 (다행이다) : copule, pas un adjectif à conjuguer ici
   if (pos === "adj" && dict.endsWith("이다")) return null;
 
@@ -107,7 +152,8 @@ export function analyzeVerb(word, pos = "verb") {
   if (!d) return null;
 
   let cls;
-  if (stem.endsWith("하")) cls = "ha";
+  if (resolved) cls = resolved;
+  else if (stem.endsWith("하")) cls = "ha";
   else if (d.f === "ㄹ") cls = "l";
   else if (d.f === "ㅂ") {
     if (endsWithAny(dict, IRREG_B)) cls = "b";
@@ -135,9 +181,42 @@ export function analyzeVerb(word, pos = "verb") {
   } else cls = "vowel";
 
   // « 살이 찌다 », « 해가 지다 » : sujet non humain, pas d'impératif possible
-  const hasSubject = /[이가]$/.test(words.at(-2) || "");
+  // (n'importe quel mot avant le verbe : « 소화가 안 되다 »)
+  // (y compris dans le contexte entre parenthèses : « (얼룩이) 묻다 »)
+  const contextWords = context.replace(/[()]/g, " ").split(/\s+/).filter(Boolean);
+  const hasSubject = [...words.slice(0, -1), ...contextWords].some(
+    (w) => /[이가]$/.test(w) && !ADVERBS_I.includes(w),
+  );
 
-  return { prefix, stem, cls, pos, dict, hasSubject };
+  return {
+    prefix,
+    stem,
+    cls,
+    pos,
+    dict,
+    hasSubject,
+    control: controlOf(dict, hasSubject),
+    stative: STATIVE.includes(dict),
+    noProhibition: NO_PROHIBITION.includes(dict),
+    // 있다 / 없다 (et 맛있다, 재미없다…) prennent -는 comme les verbes :
+    // 재미있는데, 맛있는 편이에요 — jamais *재미있은데
+    takesNeun: /[있없]다$/.test(dict),
+  };
+}
+
+/**
+ * Variantes également correctes d'une forme (acceptées en saisie).
+ * 되 + 어 : « 돼요 » (courant) et « 되어요 » (complet) sont justes tous deux.
+ */
+export function acceptedForms(verb, ending) {
+  const main = conjugate(verb, ending);
+  if (!main) return [];
+  const forms = [main];
+  if (ending.base === "aeo" && verb.cls === "vowel" && last(verb.stem).m === "ㅚ") {
+    const full = join(verb.stem + "어", ending.suffix);
+    forms.push(verb.prefix ? `${verb.prefix} ${full}` : full);
+  }
+  return forms;
 }
 
 /* ───────────────── Formes de base ───────────────── */

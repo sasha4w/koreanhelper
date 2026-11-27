@@ -1,5 +1,10 @@
 import { primaryAnswer } from "../normalize";
-import { analyzeVerb, attachParticle, conjugate } from "../conjugate";
+import {
+  acceptedForms,
+  analyzeVerb,
+  attachParticle,
+  conjugate,
+} from "../conjugate";
 import {
   PARTICLES,
   VERB_ENDINGS,
@@ -182,9 +187,12 @@ export function buildSentence(template, pivot, ctx, rng) {
     if (verbWord) words.push(verbWord);
     // « 비가 오다 » : le sujet reste affiché, seul le verbe est à conjuguer
     if (verb.prefix) pieces.push({ text: verb.prefix, keys: [] });
+    const strip = (f) => (verb.prefix ? f.slice(verb.prefix.length + 1) : f);
     pieces.push({
       text: "",
-      blank: verb.prefix ? form.slice(verb.prefix.length + 1) : form,
+      blank: strip(form),
+      // autres formes correctes (돼요 / 되어요), acceptées en saisie
+      alts: acceptedForms(verb, ending.rule).map(strip),
       hint: `${verb.dict} → ${endingTag(ending.label)}`,
       dict: verb.dict,
       keys: [
@@ -197,9 +205,26 @@ export function buildSentence(template, pivot, ctx, rng) {
   // Le pivot doit figurer dans la phrase (sinon l'exercice ne le révise pas)
   if (pivot && !pivotPlaced) return null;
 
-  const sentence = pieces
-    .map((p) => (p.blank && p.text ? p.text + p.blank : p.text || p.blank))
-    .join(" ");
+  const render = (choose) =>
+    pieces
+      .map((p) => {
+        const blank = p.blank ? choose(p) : "";
+        return blank && p.text ? p.text + blank : p.text || blank;
+      })
+      .join(" ");
+  const sentence = render((p) => p.blank);
+
+  // Toutes les phrases correctes (produit des variantes de chaque trou)
+  let sentences = [""];
+  for (const p of pieces) {
+    const options = p.blank ? p.alts || [p.blank] : [null];
+    sentences = sentences.flatMap((prefix) =>
+      options.map((o) => {
+        const chunk = o != null && p.text ? p.text + o : p.text || o || "";
+        return prefix ? `${prefix} ${chunk}` : chunk;
+      }),
+    );
+  }
 
   const fr = template.fr.replace(/\{(\w+)\}/g, (m, name) => {
     const w = filled[name];
@@ -210,6 +235,7 @@ export function buildSentence(template, pivot, ctx, rng) {
     template,
     pieces,
     sentence,
+    sentences: [...new Set(sentences)],
     fr,
     words,
     lessons: usedLessons,
@@ -264,7 +290,7 @@ export const sentenceBlanks = {
         segments.push({
           type: "blank",
           index: index++,
-          answer: p.blank,
+          answer: (p.alts || [p.blank]).join("/"),
           hint: p.hint,
         });
       }
@@ -316,7 +342,7 @@ export const sentenceBuild = {
       prompt: "Traduis en coréen",
       promptSub: `Avec : ${ingredients.join(" · ")}`,
       question: s.fr,
-      expected: s.sentence,
+      expected: s.sentences.join("/"),
       lang: "ko",
       grammarPoint: s.labels.join(" · "),
       reveal: s.sentence,

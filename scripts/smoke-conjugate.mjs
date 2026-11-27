@@ -3,11 +3,13 @@
  * Usage : node node_modules/esbuild/bin/esbuild scripts/smoke-conjugate.mjs --bundle --platform=node --format=esm --outfile=node_modules/.tmp-smoke-conj.mjs && node node_modules/.tmp-smoke-conj.mjs
  */
 import {
+  acceptedForms,
   analyzeVerb,
   attachParticle,
   commonMistakes,
   conjugate,
 } from "../src/lib/conjugate.js";
+import { VERB_ENDINGS, endingFor } from "../src/lib/exercises/endings.js";
 
 let failures = 0;
 const check = (label, ok, extra = "") => {
@@ -119,6 +121,50 @@ for (const [word, pos, ending, trap] of trapCases) {
     traps.join(", "),
   );
 }
+
+// Nature du verbe × terminaison
+const spec = (id) => VERB_ENDINGS.find((s) => s.id === id);
+const form = (word, pos, id) => {
+  const v = analyzeVerb(word, pos);
+  const e = endingFor(spec(id), pos, v);
+  return e ? conjugate(v, e) : null;
+};
+check("있다-adjectif + -는데 : 재미있는데", form("재미있다", "adj", "nde") === "재미있는데", form("재미있다", "adj", "nde"));
+check("있다-adjectif + 편 : 맛있는 편이에요", form("맛있다", "adj", "pyeon") === "맛있는 편이에요");
+check("없다-adjectif + 것 같다 : 재미없는 것 같아요", form("재미없다", "adj", "geot-gatda-1") === "재미없는 것 같아요");
+check("adjectif normal + -(으)ㄴ데 : 추운데", form("춥다", "adj", "nde") === "추운데");
+check("verbe + -는데 : 먹는데", form("먹다", "verb", "nde") === "먹는데");
+check("accident : pas de désir (다치고 싶어요)", form("다치다", "verb", "go-sipeoyo") === null);
+check("accident : interdiction OK (다치지 마세요)", form("다치다", "verb", "ji-maseyo") === "다치지 마세요");
+check("émotion : interdiction OK (긴장하지 마세요)", form("긴장하다", "verb", "ji-maseyo") === "긴장하지 마세요");
+check("émotion : pas d'impératif (긴장하세요)", form("긴장하다", "verb", "seyo") === null);
+check("passif -되다 : pas d'interdiction (배송되지 마세요)", form("배송되다", "verb", "ji-maseyo") === null);
+check("passif -되다 : progressif OK (배송되고 있어요)", form("배송되다", "verb", "go-iteoyo") === "배송되고 있어요");
+check("perception : pas de promesse (보일게요)", form("보이다", "verb", "lgeyo") === null);
+check("accident : possibilité OK (다칠 수 있어요)", form("다치다", "verb", "su-itda") === "다칠 수 있어요");
+check("verbe d'action : désir OK (먹고 싶어요)", form("먹다", "verb", "go-sipeoyo") === "먹고 싶어요");
+check("만지다 reste volontaire", form("만지다", "verb", "seyo") === "만지세요");
+check("sujet exprimé : progressif OK (살이 찌고 있어요)", form("살이 찌다", "verb", "go-iteoyo") === "살이 찌고 있어요");
+check("accident : pas de progressif (다치고 있어요)", form("다치다", "verb", "go-iteoyo") === null);
+check("état : pas de progressif (오래되고 있어요)", form("오래되다", "verb", "go-iteoyo") === null);
+check("guérir : pas d'interdiction (낫지 마세요)", form("낫다", "verb", "ji-maseyo") === null);
+check("sujet plus loin : pas d'impératif (소화가 안 되세요)", form("소화가 안 되다", "verb", "seyo") === null);
+check("adverbe en -이 ≠ sujet (같이 가세요)", form("같이 가다", "verb", "seyo") === "같이 가세요");
+
+// Homonymes levés par le contexte
+check("(길을) 묻다 → 물어요", conjugate(analyzeVerb("(길을) 묻다"), E.present) === "물어요");
+check("(얼룩이) 묻다 → 묻어요", conjugate(analyzeVerb("(얼룩이) 묻다"), E.present) === "묻어요");
+check("(고기를) 굽다 → 구워요", conjugate(analyzeVerb("(고기를) 굽다"), E.present) === "구워요");
+check("묻다 sans contexte : refusé", analyzeVerb("묻다") === null);
+check("(얼룩이) 묻다 : sujet dans le contexte → pas d'impératif", form("(얼룩이) 묻다", "verb", "seyo") === null);
+check("(길을) 묻다 : impératif OK (물으세요)", form("(길을) 묻다", "verb", "seyo") === "물으세요");
+check("안부를 묻다 → 안부를 물어요 (contexte sans parenthèses)", conjugate(analyzeVerb("안부를 묻다"), E.present) === "안부를 물어요");
+
+// Variantes acceptées
+const doe = acceptedForms(analyzeVerb("되다"), E.present);
+check("되다 : 돼요 et 되어요 acceptés", doe.join("/") === "돼요/되어요", doe.join("/"));
+check("되다 passé : 됐어요 / 되었어요", acceptedForms(analyzeVerb("되다"), E.past).join("/") === "됐어요/되었어요");
+check("먹다 : une seule forme", acceptedForms(analyzeVerb("먹다"), E.present).length === 1);
 
 // Particules
 const subj = { cons: "이", vowel: "가" };

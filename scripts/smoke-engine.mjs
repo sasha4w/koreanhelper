@@ -31,6 +31,10 @@ import {
 } from "../src/lib/progressRows.js";
 import { fromDbRows } from "../src/lib/exercises/fromDb.js";
 import { makeRng } from "../src/lib/exercises/rng.js";
+import { GENERATORS_BY_KIND } from "../src/lib/exercises/generators.js";
+import { conjugate as conjugateRaw } from "../src/lib/conjugate.js";
+const conjugateWord = (w, pos) =>
+  conjugateRaw(analyzeVerb(w, pos), { base: "aeo", suffix: "요" });
 import {
   buildSentence,
   sentenceBlanks,
@@ -336,6 +340,39 @@ check(
   "même graine = même session",
   JSON.stringify(a.map((e) => e.id)) === JSON.stringify(b.map((e) => e.id)),
 );
+
+/* ── 7a. Contexte d'homonyme facultatif à la saisie ── */
+{
+  const ctxWord = { id: 950, hangul: "(글을) 쓰다", fr: "écrire", type: "동사", level: 1 };
+  const exo = GENERATORS_BY_KIND["fr-to-ko"].generate(ctxWord);
+  check("saisie : « 쓰다 » accepté pour « (글을) 쓰다 »", checkAnswer(exo, "쓰다").ok);
+  check("saisie : « 글을 쓰다 » accepté", checkAnswer(exo, "글을 쓰다").ok);
+  check("saisie : « 읽다 » refusé", !checkAnswer(exo, "읽다").ok);
+  check("conjugaison : le contexte est ignoré", conjugateWord("(맛이) 쓰다", "adj") === "써요");
+  const slash = GENERATORS_BY_KIND["fr-to-ko"].generate({ id: 951, hangul: "헨드폰/휴대전화", fr: "portable", level: 1 });
+  check("saisie : variantes « / » conservées", checkAnswer(slash, "휴대전화").ok && checkAnswer(slash, "헨드폰").ok);
+}
+
+/* ── 7b. Homonymes (쓰다 « écrire » / « utiliser » / « amer ») ── */
+{
+  const homo = [
+    { id: 901, hangul: "쓰다", fr: "écrire", type: "동사", theme: "T", level: 1 },
+    { id: 902, hangul: "쓰다", fr: "utiliser", type: "동사", theme: "T", level: 1 },
+    { id: 903, hangul: "쓰다", fr: "amer", type: "형용사", theme: "T", level: 1 },
+    ...["읽다:lire", "보다:voir", "듣다:écouter", "가다:aller", "오다:venir", "먹다:manger"].map((s, i) => {
+      const [hangul, fr] = s.split(":");
+      return { id: 910 + i, hangul, fr, type: "동사", theme: "T", level: 1 };
+    }),
+  ];
+  let clash = 0;
+  for (let seed = 1; seed <= 40; seed++) {
+    const qcm = GENERATORS_BY_KIND["ko-to-fr"].generate(homo[0], homo, makeRng(seed));
+    if (qcm && (qcm.choices.includes("utiliser") || qcm.choices.includes("amer"))) clash++;
+    const m = GENERATORS_BY_KIND.matching.generate(homo[0], homo, makeRng(seed));
+    if (m && new Set(m.pairs.map((p) => p.ko)).size !== m.pairs.length) clash++;
+  }
+  check("homonymes : jamais un autre sens de 쓰다 parmi les choix ni en double", clash === 0, `${clash}`);
+}
 
 /* ── 8. Progression : boîtes ── */
 check("juste : +1", nextBox(1, true) === 2);

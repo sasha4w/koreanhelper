@@ -1,5 +1,6 @@
 import { primaryAnswer } from "../normalize";
 import {
+  acceptedForms,
   analyzeVerb,
   attachParticle,
   commonMistakes,
@@ -45,8 +46,16 @@ function pickDistractors(target, pool, rng, count, valueOf) {
 
   for (const matches of tiers) {
     if (out.length >= count) break;
+    // Jamais un homonyme de la cible (쓰다 « écrire » / « utiliser ») :
+    // son sens serait aussi une bonne réponse.
     const candidates = rng.shuffle(
-      pool.filter((w) => w.id !== target.id && hasWord(w) && matches(w)),
+      pool.filter(
+        (w) =>
+          w.id !== target.id &&
+          hasWord(w) &&
+          normalizeKey(w.hangul) !== normalizeKey(target.hangul) &&
+          matches(w),
+      ),
     );
     for (const w of candidates) {
       if (out.length >= count) break;
@@ -72,6 +81,27 @@ const wordHint = (w) =>
 
 /* ───────────────── 1. FR → 한글 (saisie) ───────────────── */
 
+/**
+ * Réponses coréennes acceptées pour un mot du vocabulaire, séparées par
+ * « / » (format lu par isCorrect). Le contexte entre parenthèses sert à
+ * distinguer les homonymes ; il est facultatif à la saisie :
+ *   "(글을) 쓰다"      → "(글을) 쓰다/쓰다/글을 쓰다"
+ *   "헨드폰/휴대전화"   → chaque variante, telle quelle
+ */
+export function koreanAnswers(hangul) {
+  const out = new Set();
+  for (const raw of String(hangul || "").split("/")) {
+    const v = raw.trim();
+    if (!v) continue;
+    out.add(v);
+    const bare = v.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+    if (bare) out.add(bare);
+    const flat = v.replace(/[()]/g, " ").replace(/\s+/g, " ").trim();
+    if (flat) out.add(flat);
+  }
+  return [...out].join("/");
+}
+
 const frToKo = {
   kind: "fr-to-ko",
   source: "vocab",
@@ -83,7 +113,7 @@ const frToKo = {
       level: String(w.level),
       prompt: "Écris ce mot en coréen",
       question: w.fr,
-      expected: w.hangul,
+      expected: koreanAnswers(w.hangul),
       lang: "ko",
       hint: wordHint(w),
       reveal: w.hangul,
@@ -142,10 +172,20 @@ const matching = {
       (x) => x.id !== w.id && hasWord(x) && (!w.theme || x.theme !== w.theme),
     );
 
-    const partners = [
-      ...rng.shuffle(sameTheme),
-      ...rng.shuffle(others),
-    ].slice(0, MATCH_SIZE - 1);
+    // Ni deux fois le même hangeul (homonymes : 쓰다 ×4), ni deux fois la
+    // même traduction : chaque paire doit avoir une seule réponse possible.
+    const seenKo = new Set([normalizeKey(w.hangul)]);
+    const seenFr = new Set([normalizeKey(primaryAnswer(w.fr))]);
+    const partners = [];
+    for (const x of [...rng.shuffle(sameTheme), ...rng.shuffle(others)]) {
+      if (partners.length >= MATCH_SIZE - 1) break;
+      const ko = normalizeKey(x.hangul);
+      const fr = normalizeKey(primaryAnswer(x.fr));
+      if (seenKo.has(ko) || seenFr.has(fr)) continue;
+      seenKo.add(ko);
+      seenFr.add(fr);
+      partners.push(x);
+    }
 
     if (partners.length < 2) return null;
 
@@ -504,6 +544,8 @@ const conjugateInput = {
     return {
       ...conjugationCommon("conjugate", w, c),
       prompt: `Conjugue : ${c.spec.label}`,
+      // Saisie : toutes les formes correctes sont acceptées (돼요 / 되어요)
+      expected: acceptedForms(c.verb, c.ending).join("/"),
       reveal: c.answer,
     };
   },
