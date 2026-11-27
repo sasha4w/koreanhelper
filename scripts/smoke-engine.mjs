@@ -10,11 +10,25 @@ import {
   progressUpdates,
 } from "../src/lib/exercises/check.js";
 import {
+  mergeStates,
   nextBox,
   recordAnswer,
   reset,
   selectionWeight,
 } from "../src/lib/progress.js";
+import {
+  activityGrid,
+  intensity,
+  lastDays,
+  levelOf,
+  xpOf,
+} from "../src/lib/dashboard.js";
+import {
+  diffForServer,
+  emptySnapshot,
+  rowsToState,
+  snapshotOf,
+} from "../src/lib/progressRows.js";
 import { fromDbRows } from "../src/lib/exercises/fromDb.js";
 import { makeRng } from "../src/lib/exercises/rng.js";
 import {
@@ -471,6 +485,80 @@ for (const t of TEMPLATES) {
   check(`modèle ${t.id} : références valides`, problems.length === 0, problems.join(", "));
 }
 check("identifiants de modèles uniques", new Set(TEMPLATES.map((t) => t.id)).size === TEMPLATES.length);
+
+/* ── 13. Fusion de progression (invité / appareils / serveur) ── */
+const devA = {
+  items: {
+    "vocab:1": { seen: 3, correct: 3, wrong: 0, box: 4, lastSeen: 200 },
+    "vocab:2": { seen: 1, correct: 0, wrong: 1, box: 1, lastSeen: 100 },
+  },
+  streak: { current: 2, best: 5, lastDay: "2026-11-20" },
+  history: [{ day: "2026-11-20", count: 10, score: 8 }],
+};
+const devB = {
+  items: {
+    "vocab:1": { seen: 2, correct: 2, wrong: 0, box: 3, lastSeen: 150 },
+    "vocab:2": { seen: 2, correct: 1, wrong: 1, box: 2, lastSeen: 300 },
+    "vocab:3": { seen: 1, correct: 1, wrong: 0, box: 2, lastSeen: 50 },
+  },
+  streak: { current: 4, best: 4, lastDay: "2026-11-22" },
+  history: [
+    { day: "2026-11-20", count: 6, score: 6 },
+    { day: "2026-11-22", count: 15, score: 12 },
+  ],
+};
+const merged = mergeStates(devA, devB);
+check("fusion : entrée la plus récente gagne", merged.items["vocab:1"].box === 4 && merged.items["vocab:2"].box === 2);
+check("fusion : union des clés", Object.keys(merged.items).length === 3);
+check("fusion : série la plus récente, record max", merged.streak.current === 4 && merged.streak.best === 5);
+check("fusion : historique par jour sans doublon", merged.history.length === 2 && merged.history[0].count === 10);
+check("fusion : idempotente", JSON.stringify(mergeStates(merged, devB)) === JSON.stringify(merged));
+check("fusion : état vide accepté", Object.keys(mergeStates(null, devA).items).length === 2);
+
+/* ── 14. Tableau de bord ── */
+check("niveau 1 à 0 XP", levelOf(0).level === 1 && levelOf(0).pct === 0);
+check("niveau 2 à 100 XP", levelOf(100).level === 2);
+check("XP : 10/bonne réponse + 25/maîtrisé", xpOf({ items: { a: { correct: 3, box: 5 } } }) === 55);
+const grid = activityGrid([{ day: new Date().toISOString().slice(0, 10), count: 7, score: 5 }], 15);
+check("activité : 15 semaines", grid.cells.length === 105 && grid.max === 7);
+check("activité : aujourd'hui compté", grid.cells.some((c) => c.count === 7 && !c.future));
+check("intensité 0 → 4", intensity(0, 10) === 0 && intensity(10, 10) === 4 && intensity(1, 10) === 1);
+check("14 derniers jours", lastDays([], 14).length === 14);
+
+/* ── 15. Lignes Supabase ↔ état local ── */
+const rows = {
+  items: [
+    { item_key: "vocab:1", box: 3, seen: 4, correct: 3, wrong: 1, last_seen: "2026-11-20T10:00:00.123+00:00" },
+    { item_key: "verbes:2", box: 1, seen: 1, correct: 0, wrong: 1, last_seen: null },
+  ],
+  stats: { streak_current: 3, streak_best: 7, last_day: "2026-11-20" },
+  history: [{ day: "2026-11-20", count: 12, score: 9 }],
+};
+const fromRows = rowsToState(rows);
+check(
+  "lignes → état : horodatage en ms exact",
+  fromRows.items["vocab:1"].lastSeen === Date.parse("2026-11-20T10:00:00.123Z"),
+);
+check("lignes → état : série", fromRows.streak.best === 7 && fromRows.streak.lastDay === "2026-11-20");
+const snap = snapshotOf(fromRows);
+const unchanged = diffForServer(fromRows, snap);
+check(
+  "diff : rien à envoyer si identique",
+  !unchanged.items.length && !unchanged.history.length && !unchanged.stats,
+);
+const changed = {
+  ...fromRows,
+  items: { ...fromRows.items, "vocab:1": { ...fromRows.items["vocab:1"], box: 4 }, "vocab:9": { box: 2, seen: 1, correct: 1, wrong: 0, lastSeen: 5 } },
+  history: [...fromRows.history, { day: "2026-11-21", count: 3, score: 3 }],
+};
+const d = diffForServer(changed, snap);
+check(
+  "diff : seulement les lignes modifiées",
+  d.items.map((i) => i.key).sort().join() === "vocab:1,vocab:9" &&
+    d.history.length === 1 &&
+    d.stats === null,
+);
+check("diff : premier envoi = tout", diffForServer(fromRows, emptySnapshot()).items.length === 2);
 
 console.log(
   failures === 0

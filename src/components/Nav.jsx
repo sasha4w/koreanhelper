@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home as HomeIcon, Book, Puzzle, Target } from "./Icon";
+import { Home as HomeIcon, Book, Puzzle, Target, BarChart } from "./Icon";
 import "./Nav.css";
 
 const TABS = [
@@ -27,6 +27,12 @@ const TABS = [
       p.startsWith("/entrainement") ||
       p.startsWith("/quiz") ||
       p.startsWith("/exo"),
+  },
+  {
+    to: "/progres",
+    Icon: BarChart,
+    label: "Progrès",
+    match: (p) => p.startsWith("/progres"),
   },
 ];
 

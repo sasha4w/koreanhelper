@@ -6,6 +6,8 @@ import Vocabulaire from "./pages/Vocabulaire";
 import Entrainement from "./pages/Entrainement";
 import Quiz from "./pages/Quiz";
 import Exo from "./pages/Exo";
+import Progres from "./pages/Progres";
+import Compte from "./pages/Compte";
 
 function NotFound() {
   return (
@@ -36,6 +38,8 @@ export default function App() {
         <Route path="/entrainement" element={<Entrainement />} />
         <Route path="/quiz" element={<Quiz />} />
         <Route path="/exo" element={<Exo />} />
+        <Route path="/progres" element={<Progres />} />
+        <Route path="/compte" element={<Compte />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
