@@ -249,3 +249,37 @@ export const Mark = (p) => (
     <path d="M12 5.5A6.5 6.5 0 0 0 12 18.5" fill="none" stroke="#fff" strokeWidth="0.6" />
   </svg>
 );
+
+export const User = (p) => (
+  <Svg {...p}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4.5 20.5c1.2-3.6 4.1-5.5 7.5-5.5s6.3 1.9 7.5 5.5" />
+  </Svg>
+);
+
+export const BarChart = (p) => (
+  <Svg {...p}>
+    <path d="M4 20h16" />
+    <path d="M7 16v-5M12 16V6M17 16v-8" />
+  </Svg>
+);
+
+export const LogOut = (p) => (
+  <Svg {...p}>
+    <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+    <path d="M10 16l-4-4 4-4M6 12h10" />
+  </Svg>
+);
+
+export const Cloud = (p) => (
+  <Svg {...p}>
+    <path d="M7 18.5h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 9.6 4.5 4.5 0 0 0 7 18.5Z" />
+  </Svg>
+);
+
+export const Calendar = (p) => (
+  <Svg {...p}>
+    <rect x="3.5" y="5" width="17" height="15" rx="2" />
+    <path d="M3.5 10h17M8 3v4M16 3v4" />
+  </Svg>
+);

@@ -1,7 +1,28 @@
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Nav from "./Nav";
-import { Mark } from "./Icon";
+import { Mark, User } from "./Icon";
+import { useAuth } from "../lib/auth/AuthProvider";
 import "./Layout.css";
+
+/** Accès au compte, en haut à droite : initiale si connecté. */
+function AccountButton() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  return (
+    <Link
+      to="/compte"
+      className="header-account"
+      aria-label={user ? "Mon compte" : "Se connecter"}
+    >
+      {user ? (
+        <span className="dot">{(user.email || "?").slice(0, 1).toUpperCase()}</span>
+      ) : (
+        <User />
+      )}
+      <span className="label">{user ? "Compte" : "Se connecter"}</span>
+    </Link>
+  );
+}
 
 // Pages dont le contenu profite d'une grille plus large (Vocabulaire,
 // Grammaire/Verbes) : la nouvelle grille de cartes gaspille moins l'espace
@@ -19,6 +40,7 @@ export default function Layout({ children }) {
           <Mark />
           Korean Helper
         </span>
+        <AccountButton />
       </header>
 
       {/* La `key` remonte ce wrapper à chaque changement de route : son

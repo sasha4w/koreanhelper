@@ -1,0 +1,127 @@
+.account {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.account-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  text-align: center;
+}
+
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--violet), var(--rose));
+  color: var(--text-on-violet);
+  font-size: 1.6rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-md);
+}
+
+.account-avatar.guest {
+  background: var(--violet-soft);
+  color: var(--violet);
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.account-form label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.account-form input {
+  min-height: var(--tap);
+  padding: 0 var(--sp-3);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  font: inherit;
+  font-weight: 400;
+  background: var(--surface-alt);
+  transition: border-color var(--t-fast);
+}
+
+.account-form input:focus {
+  outline: none;
+  border-color: var(--violet-light);
+  background: var(--surface);
+}
+
+.account-msg {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+}
+
+.account-msg.error {
+  background: var(--danger-bg);
+  color: var(--danger-strong);
+}
+
+.account-msg.info {
+  background: var(--success-bg);
+  color: var(--success-strong);
+}
+
+.account-note {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.account-sync {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.account-sync > span {
+  flex: 1;
+}
+
+.account-sync .icon {
+  color: var(--success);
+  font-size: 1.2rem;
+}
+
+.account-sync.syncing .icon {
+  color: var(--violet-light);
+  animation: sync-pulse 1s ease-in-out infinite;
+}
+
+.account-sync.error .icon {
+  color: var(--danger);
+}
+
+@keyframes sync-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}

@@ -65,7 +65,7 @@
   }
 
   .app-header {
-    position: static;
+    position: relative;
     background: none;
     border-bottom: none;
     backdrop-filter: none;
@@ -75,5 +75,46 @@
 
   .app-title {
     font-size: var(--fs-h1);
+  }
+}
+
+/* ── Bouton compte dans l'en-tête ── */
+.header-account {
+  position: absolute;
+  right: var(--sp-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--violet);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--t-fast), box-shadow var(--t-fast);
+}
+
+.header-account:hover {
+  background: var(--violet-softer);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-account .dot {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--violet), var(--rose));
+  color: #fff;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 480px) {
+  .header-account .label {
+    display: none;
   }
 }

@@ -4,7 +4,9 @@
  * ou stockage désactivé ne doivent jamais casser une session de révision.
  */
 
-const KEY = "kh:progress:v1";
+/** Clé de l'invité (sans compte). Un compte a sa propre clé, voir switchStore. */
+export const GUEST_KEY = "kh:progress:v1";
+let KEY = GUEST_KEY;
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Intervalle avant re-présentation, par boîte (index = box - 1). */
@@ -49,6 +51,79 @@ export function subscribe(fn) {
 
 export function getState() {
   return read();
+}
+
+/**
+ * Change de « tiroir » local : chaque compte a son propre cache, pour qu'un
+ * autre utilisateur du même navigateur ne récupère pas la progression.
+ */
+export function switchStore(key = GUEST_KEY) {
+  if (key === KEY) return;
+  KEY = key;
+  memory = null;
+  listeners.forEach((fn) => fn(read()));
+}
+
+/** Remplace tout l'état (après fusion avec le serveur). */
+export function replaceState(state) {
+  write({ ...EMPTY(), ...(state || {}) });
+}
+
+/** Lit un tiroir sans en changer (ex. progression invité à fusionner). */
+export function peekStore(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? { ...EMPTY(), ...JSON.parse(raw) } : EMPTY();
+  } catch {
+    return EMPTY();
+  }
+}
+
+export function clearStore(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // stockage indisponible : rien à effacer
+  }
+}
+
+/**
+ * Fusionne deux états de progression (deux appareils, ou invité + compte).
+ * Idempotent : fusionner deux fois le même état ne double rien.
+ *  - items   : pour chaque clé, l'entrée vue le plus récemment
+ *  - streak  : celle dont le dernier jour est le plus récent ; best = max
+ *  - history : par jour, l'entrée avec le plus d'exercices
+ */
+export function mergeStates(a, b) {
+  const A = { ...EMPTY(), ...(a || {}) };
+  const B = { ...EMPTY(), ...(b || {}) };
+
+  const items = { ...A.items };
+  for (const [key, entry] of Object.entries(B.items || {})) {
+    const mine = items[key];
+    if (!mine || (entry?.lastSeen || 0) > (mine.lastSeen || 0)) {
+      items[key] = entry;
+    }
+  }
+
+  const sa = A.streak || EMPTY().streak;
+  const sb = B.streak || EMPTY().streak;
+  const latest = (sb.lastDay || "") > (sa.lastDay || "") ? sb : sa;
+  const streak = {
+    ...latest,
+    best: Math.max(sa.best || 0, sb.best || 0, latest.current || 0),
+  };
+
+  const byDay = new Map();
+  for (const h of [...(A.history || []), ...(B.history || [])]) {
+    const prev = byDay.get(h.day);
+    if (!prev || (h.count || 0) > (prev.count || 0)) byDay.set(h.day, { ...h });
+  }
+  const history = [...byDay.values()]
+    .sort((x, y) => x.day.localeCompare(y.day))
+    .slice(-90);
+
+  return { items, streak, history };
 }
 
 const dayKey = (ts = Date.now()) => new Date(ts).toISOString().slice(0, 10);
