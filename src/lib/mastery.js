@@ -20,17 +20,3 @@ export function getWordMasteryTier(wordId, state = getState()) {
   if (entry.box <= 4) return "almost";
   return "mastered";
 }
-
-/**
- * Répartition d'un ensemble de mots par niveau de maîtrise.
- * @param {{id: number}[]} words
- * @returns {{ new: number, learning: number, almost: number, mastered: number }}
- */
-export function getMasteryDistribution(words) {
-  const state = getState();
-  const counts = { new: 0, learning: 0, almost: 0, mastered: 0 };
-  for (const w of words) {
-    counts[getWordMasteryTier(w.id, state)]++;
-  }
-  return counts;
-}

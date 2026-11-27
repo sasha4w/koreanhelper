@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import ExerciseRunner from "../components/ExerciseRunner";
 import { useTables } from "../hooks/useTable";
 import { useLang } from "../lib/i18n/LangProvider";
-import { getDueEntries, getStats, subscribe } from "../lib/progress";
+import { getDueEntries, getState, getStats, subscribe } from "../lib/progress";
 import { buildSession } from "../lib/exercises/buildSession";
 import {
   Book,
@@ -14,12 +14,13 @@ import {
   Play,
   Puzzle,
   ChevronRight,
-  Star,
   Target,
   Trophy,
   Wave,
   X,
+  Zap,
 } from "../components/Icon";
+import { levelOf, xpOf } from "../lib/dashboard";
 import "./Home.css";
 
 const TABLES = ["vocabulaire", "grammaire", "verbes", "exercices"];
@@ -34,6 +35,10 @@ export default function Home() {
   const [showDue, setShowDue] = useState(false);
 
   useEffect(() => subscribe(() => setStats(getStats())), []);
+
+  // `stats` change à chaque réponse : relit l'état pour le niveau (XP).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const level = useMemo(() => levelOf(xpOf(getState())).level, [stats]);
 
   const daily = useMemo(() => {
     if (loading) return [];
@@ -99,29 +104,26 @@ export default function Home() {
         <p className="subtitle">{lang === "en" ? "Ready for today's review?" : "Prêt·e pour ta révision du jour ?"}</p>
       </header>
 
-      <div className="home-stats">
-        <Stat
-          value={stats.streak.current}
-          label={lang === "en" ? "days in a row" : "jours d'affilée"}
-          Icon={Flame}
-        />
-        <Stat
-          value={stats.due}
-          label={lang === "en" ? "to review" : "à réviser"}
-          Icon={Clock}
+      {/* Résumé : le détail est sur la page Progrès */}
+      <div className="home-summary">
+        <span className="home-chip">
+          <Flame /> <strong>{stats.streak.current}</strong>{" "}
+          {lang === "en" ? "day streak" : stats.streak.current > 1 ? "jours d'affilée" : "jour d'affilée"}
+        </span>
+        <button
+          type="button"
+          className={`home-chip clickable ${showDue ? "active" : ""}`}
           onClick={() => setShowDue((v) => !v)}
-          active={showDue}
-        />
-        <Stat
-          value={stats.mastered}
-          label={lang === "en" ? "mastered" : "maîtrisés"}
-          Icon={Star}
-        />
-        <Stat
-          value={stats.seen ? `${stats.accuracy}%` : "—"}
-          label={lang === "en" ? "success rate" : "de réussite"}
-          Icon={Target}
-        />
+          aria-expanded={showDue}
+        >
+          <Clock /> <strong>{stats.due}</strong> {lang === "en" ? "to review" : "à réviser"}
+        </button>
+        <Link to="/progres" className="home-chip link">
+          <Zap /> {lang === "en" ? "Level" : "Niveau"} <strong>{level}</strong>
+          <span className="home-chip-arrow">
+            {lang === "en" ? "My progress" : "Mes progrès"} <ChevronRight />
+          </span>
+        </Link>
       </div>
 
       {showDue && (
@@ -227,26 +229,6 @@ export default function Home() {
         </HomeLink>
       </nav>
     </div>
-  );
-}
-
-function Stat(props) {
-  // Déstructuré ici, pas dans la signature : un paramètre destructuré
-  // utilisé seulement comme balise JSX échappe à l'analyse d'ESLint.
-  const { value, label, Icon, onClick, active } = props;
-  const Tag = onClick ? "button" : "div";
-  return (
-    <Tag
-      type={onClick ? "button" : undefined}
-      className={`home-stat ${onClick ? "clickable" : ""} ${active ? "active" : ""}`}
-      onClick={onClick}
-    >
-      <span className="home-stat-icon">
-        <Icon />
-      </span>
-      <span className="home-stat-value">{value}</span>
-      <span className="home-stat-label">{label}</span>
-    </Tag>
   );
 }
 

@@ -163,6 +163,20 @@ export default function Progres() {
             </li>
           ))}
         </ul>
+        <details className="pg-rules">
+          <summary>Comment ça marche ?</summary>
+          <ul>
+            <li>
+              <strong>Nouveau</strong> : jamais rencontré. <strong>En cours</strong> : niveaux 1–2, revient
+              souvent. <strong>Presque acquis</strong> : niveaux 3–4, revu de plus en plus rarement.{" "}
+              <strong>Maîtrisé</strong> : niveau 5, seulement un rappel de temps en temps.
+            </li>
+            <li>Une bonne réponse fait monter d'un niveau ; une erreur fait descendre d'un niveau (de deux depuis le niveau 4).</li>
+            <li>QCM, associations et remises en ordre font monter jusqu'au niveau 3 seulement : au-delà, il faut écrire la réponse.</li>
+            <li>Délai avant de revoir un élément : immédiat, 1 jour, 3 jours, 7 jours puis 21 jours selon son niveau.</li>
+            <li>Les éléments maîtrisés font au plus 10 % d'une session.</li>
+          </ul>
+        </details>
       </section>
 
       {/* ── Activité ── */}

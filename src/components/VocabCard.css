@@ -56,7 +56,7 @@
 }
 
 /* Couleur de bordure = niveau de maîtrise du mot (voir lib/mastery.js) —
-   même palette que MasteryBar.css. */
+   même palette que la légende de maîtrise (Vocabulaire.css). */
 .vocab-word-card.mastery-new {
   border-left-color: var(--text-faint);
 }

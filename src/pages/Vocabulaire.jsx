@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import VocabCard from "../components/VocabCard";
 import SearchBar from "../components/SearchBar";
 import ChipList from "../components/ChipList";
 import CardGrid from "../components/CardGrid";
 import DetailPanel from "../components/DetailPanel";
-import MasteryBar from "../components/MasteryBar";
 import { Target } from "../components/Icon";
 import { useTable } from "../hooks/useTable";
 import { useLang } from "../lib/i18n/LangProvider";
 import { levelOptions, matchesLevel } from "../lib/levels";
 import { TYPE_COLORS } from "../lib/constants";
 import { normalizeFr } from "../lib/normalize";
-import { getMasteryDistribution } from "../lib/mastery";
 import { subscribe } from "../lib/progress";
 import "./Vocabulaire.css";
 
@@ -55,18 +53,25 @@ const THEME_LABELS = {
   },
 };
 
+const MASTERY_LEGEND = [
+  ["new", "Nouveau", "New"],
+  ["learning", "En cours", "Learning"],
+  ["almost", "Presque acquis", "Almost mastered"],
+  ["mastered", "Maîtrisé", "Mastered"],
+];
+
 export default function Vocabulaire() {
   const { data: words, loading, error } = useTable("vocabulaire");
   const navigate = useNavigate();
-  const { lang, t } = useLang();
+  const { lang } = useLang();
   const [level, setLevel] = useState("all");
   const [groupBy, setGroupBy] = useState("theme");
   const [search, setSearch] = useState("");
   const [selectedKey, setSelectedKey] = useState(null);
 
-  // Force un recalcul de la répartition de maîtrise après chaque session
-  // (recordAnswer/recordSession notifient les abonnés de progress.js).
-  const [progressTick, setProgressTick] = useState(0);
+  // Re-rendu après chaque réponse : les cartes affichent le niveau de
+  // maîtrise de chaque mot (recordAnswer notifie les abonnés de progress.js).
+  const [, setProgressTick] = useState(0);
   useEffect(() => subscribe(() => setProgressTick((t) => t + 1)), []);
 
   const levels = useMemo(() => levelOptions(words), [words]);
@@ -82,14 +87,6 @@ export default function Vocabulaire() {
       return fr_match || en_match || hangul_match;
     });
   }, [words, level, search, lang]);
-
-  // `progressTick` ne sert qu'à déclencher un recalcul quand progress.js
-  // notifie un changement (fin de session) — il n'est pas lu dans le corps.
-  const masteryDistribution = useMemo(
-    () => getMasteryDistribution(filtered),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filtered, progressTick],
-  );
 
   const groups = useMemo(() => {
     const map = new Map();
@@ -145,8 +142,6 @@ export default function Vocabulaire() {
       {/* Filtres */}
       <ChipList options={levels} value={level} onChange={setLevel} />
 
-      <MasteryBar counts={masteryDistribution} />
-
       <div className="segmented-row">
         <div className="segmented">
           <button
@@ -183,29 +178,20 @@ export default function Vocabulaire() {
           ))}
         </div>
 
-        <ul className="mastery-legend-criteria">
-          <li>
-            <span className="mastery-bar-dot mastery-new" />
-            <strong>{lang === "en" ? "New" : "Nouveau"}</strong> — {lang === "en" ? "word never encountered" : "mot jamais rencontré"}
-          </li>
-          <li>
-            <span className="mastery-bar-dot mastery-learning" />
-            <strong>{lang === "en" ? "Learning" : "En cours"}</strong> — {lang === "en" ? "levels 1–2, seen often" : "niveaux 1–2, revient souvent"}
-          </li>
-          <li>
-            <span className="mastery-bar-dot mastery-almost" />
-            <strong>{lang === "en" ? "Almost mastered" : "Presque acquis"}</strong> — {lang === "en" ? "levels 3–4, reviewed less often" : "niveaux 3–4, revu de plus en plus rarement"}
-          </li>
-          <li>
-            <span className="mastery-bar-dot mastery-mastered" />
-            <strong>{lang === "en" ? "Mastered" : "Maîtrisé"}</strong> — {lang === "en" ? "level 5, comes back only for occasional recall" : "niveau 5, ne revient que pour un rappel ponctuel"}
-          </li>
+        {/* Couleur du liseré des cartes = niveau de maîtrise du mot */}
+        <ul className="mastery-legend">
+          {MASTERY_LEGEND.map(([tier, fr, en]) => (
+            <li key={tier}>
+              <span className={`mastery-dot tier-${tier}`} />
+              {lang === "en" ? en : fr}
+            </li>
+          ))}
         </ul>
-        <p className="mastery-legend-note">
+        <Link to="/progres" className="mastery-legend-link">
           {lang === "en"
-            ? "A correct answer raises the word one level, a mistake lowers it (two levels from level 4). Multiple-choice and matching exercises can raise a word up to level 3 only: beyond that, you need to type it."
-            : "Une bonne réponse fait monter le mot d'un niveau, une erreur le fait descendre (de deux depuis le niveau 4). Les QCM et associations font monter jusqu'au niveau 3 seulement : au-delà, il faut l'écrire."}
-        </p>
+            ? "How mastery works · my progress →"
+            : "Comment fonctionne la maîtrise · ma progression →"}
+        </Link>
       </details>
 
       {groups.length === 0 ? (
