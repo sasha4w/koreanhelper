@@ -66,6 +66,60 @@
   background: var(--surface);
 }
 
+.password-field {
+  position: relative;
+  display: flex;
+}
+
+.password-field input {
+  flex: 1;
+  min-width: 0;
+  padding-right: calc(var(--tap) + var(--sp-1));
+}
+
+.password-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-md);
+  background: none;
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--violet-light);
+}
+
+.account-link {
+  align-self: flex-end;
+  margin: calc(-1 * var(--sp-1)) 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--violet-light);
+  cursor: pointer;
+}
+
+.account-link:hover {
+  text-decoration: underline;
+}
+
+.account-link.center {
+  align-self: center;
+  margin: 0;
+}
+
 .account-msg {
   margin: 0;
   padding: var(--sp-2) var(--sp-3);

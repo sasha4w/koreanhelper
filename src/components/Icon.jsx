@@ -56,6 +56,7 @@ export const Keyboard = icon("keyboard");
 export const Shuffle = icon("shuffle");
 export const Link = icon("link");
 export const Eye = icon("visibility");
+export const EyeOff = icon("visibility_off");
 export const ListChecks = icon("checklist");
 export const Trophy = icon("trophy");
 export const ThumbsUp = icon("thumb_up");
